@@ -9,6 +9,10 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "zod": "^3.24.2"
+    "@tanstack/query-sync-storage-persister": "^5.67.2",
+    "ink": "^5.1.1",
+    "react": "^18.2.0",
+    "zod": "^3.24.2",
+    "zustand": "^5.0.3"
   }
 }

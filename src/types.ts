@@ -117,21 +117,3 @@ export const AppSettingsSchema = z.object({
 
 // Use type inference from the schema
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
-
-/**
- * Application state
- */
-
-export enum AppMode {
-  CLI = "cli", // Command-line interface mode
-  TUI = "tui", // Terminal UI mode
-  DAEMON = "daemon", // Background sync daemon mode
-}
-
-export type AppState = {
-  mode: AppMode;
-  settings: AppSettings;
-  syncStatus: SyncStatus;
-  projects: Project[];
-  tasks: Task[];
-};

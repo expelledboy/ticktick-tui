@@ -1,4 +1,6 @@
+// Import bootstrap file to fix React with Bun
 import { authenticate } from "./app/authenticate";
+import { runApp } from "./app/main";
 import { loadOAuthTokens } from "./auth";
 import { api } from "./ticktick/api";
 
@@ -13,12 +15,7 @@ const main = async () => {
     api.setAuthToken(tokens?.access_token);
   }
 
-  const projects = await api.getProjects();
-
-  console.log("Projects:");
-  for (const project of projects) {
-    console.log(`- ${project.name}`);
-  }
+  runApp().catch(console.error);
 };
 
 main().catch(console.error);
