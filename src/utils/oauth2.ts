@@ -7,7 +7,7 @@
 import open from "open";
 import http from "http";
 import { URL } from "url";
-import { debug, info, error } from "../logs";
+import { debug, info, logError } from "../logger";
 
 // Constants
 const TICKTICK_AUTH_URL = "https://ticktick.com/oauth/authorize";
@@ -97,7 +97,7 @@ export const exchangeCodeForTokens = async (
   if (!response.ok) {
     const errorText = await response.text();
     const errorMsg = `Token exchange failed: ${response.status} - ${errorText}`;
-    error(errorMsg);
+    logError(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -136,7 +136,7 @@ export const refreshAccessToken = async (
   if (!response.ok) {
     const errorText = await response.text();
     const errorMsg = `Token refresh failed: ${response.status} - ${errorText}`;
-    error(errorMsg);
+    logError(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -164,7 +164,7 @@ export const handleCallback = async (
 
   if (!code) {
     const errorMsg = "No authorization code found in callback URL";
-    error(errorMsg);
+    logError(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -255,7 +255,7 @@ const createCallbackServer = (
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      error("Error handling callback:", errorMsg);
+      logError("Error handling callback:", errorMsg);
 
       const response = generateHtmlResponse(
         "Server Error",
@@ -385,7 +385,7 @@ const startLocalServer = (
     // Handle server errors
     server.on("error", (err) => {
       const errorMsg = `Server error: ${err.message}`;
-      error(errorMsg);
+      logError(errorMsg);
       reject(new Error(errorMsg));
     });
 

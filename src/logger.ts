@@ -36,7 +36,7 @@ export const info = (...args: any[]) => {
 };
 
 // We log to console and file (critical errors)
-export const error = (...args: any[]) => {
+export const logError = (...args: any[]) => {
   console.error("ERROR", ...args);
   logToFile("ERROR", ...args);
 };

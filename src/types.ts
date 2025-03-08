@@ -81,20 +81,25 @@ export const AppSettingsSchema = z.object({
 
   // Keybindings
   keybindings: z.object({
+    // Task navigation
+    navUp: z.string().default("k").describe("Navigate up"),
+    navDown: z.string().default("j").describe("Navigate down"),
+    navLeft: z.string().default("h").describe("Navigate left"),
+    navRight: z.string().default("l").describe("Navigate right"),
+    // UI control
     toggleSidebar: z.string().default("ctrl+p").describe("Shortcut for toggling the projects sidebar"),
-    scrollTaskDown: z.string().default("j").describe("Scroll down within task list"),
-    scrollTaskUp: z.string().default("k").describe("Scroll up within task list"),
-    scrollProjectDown: z.string().default("ctrl+n").describe("Scroll to next project"),
-    scrollProjectUp: z.string().default("ctrl+p").describe("Scroll to previous project"),
+    exitProgram: z.string().default("q").describe("Exit the program"),
+    // Task actions
+    addTask: z.string().default("a").describe("Add a new task"),
     completeTask: z.string().default("c").describe("Mark current task as complete"),
     moveTaskDown: z.string().default("ctrl+j").describe("Move task down in the list"),
     moveTaskUp: z.string().default("ctrl+k").describe("Move task up in the list"),
-    addTask: z.string().default("a").describe("Add a new task"),
-    exitProgram: z.string().default("q").describe("Exit the program"),
     editTaskTitle: z.string().default("i").describe("Edit the task title"),
     editTaskProperties: z.string().default("e").describe("Edit task other properties"),
+    // Search
     search: z.string().default("/").describe("Start search"),
     toggleGlobalSearch: z.string().default("ctrl+g").describe("Toggle global search"),
+    // Debug
     switchToLogs: z.string().default("ctrl+l").describe("Switch to logs mode"),
     switchToDebug: z.string().default("ctrl+d").describe("Switch to debug mode"),
   }).default({}),

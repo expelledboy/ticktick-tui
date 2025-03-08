@@ -6,7 +6,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { debug, info, error } from "./logs";
+import { debug, info, logError } from "./logger";
 import { config } from "./config";
 import type { OAuth2Tokens, OAuth2Config } from "./utils/oauth2";
 
@@ -88,7 +88,7 @@ export const saveOAuthCredentials = async (
     info("OAuth credentials saved successfully");
   } catch (err) {
     const errorMsg = `Failed to save OAuth credentials: ${err instanceof Error ? err.message : String(err)}`;
-    error(errorMsg);
+    logError(errorMsg);
     throw new Error(errorMsg);
   }
 };
@@ -107,7 +107,7 @@ export const loadOAuthCredentials = async (): Promise<OAuth2Config | null> => {
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    error("Failed to load OAuth credentials:", errorMsg);
+    logError("Failed to load OAuth credentials:", errorMsg);
   }
 
   return null;
@@ -142,7 +142,7 @@ export const saveOAuthTokens = async (tokens: OAuth2Tokens): Promise<void> => {
     );
   } catch (err) {
     const errorMsg = `Failed to save authentication tokens: ${err instanceof Error ? err.message : String(err)}`;
-    error(errorMsg);
+    logError(errorMsg);
     throw new Error(errorMsg);
   }
 };
@@ -161,7 +161,7 @@ export const loadOAuthTokens = async (): Promise<OAuth2Tokens | null> => {
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    error("Failed to load tokens:", errorMsg);
+    logError("Failed to load tokens:", errorMsg);
   }
 
   return null;
@@ -240,7 +240,7 @@ export const getAccessToken = async (
 
   if (!tokens) {
     const errorMsg = "Not authenticated. Please authenticate first.";
-    error(errorMsg);
+    logError(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -257,7 +257,7 @@ export const getAccessToken = async (
       return newTokens.access_token;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      error("Failed to refresh token:", errorMsg);
+      logError("Failed to refresh token:", errorMsg);
       // If refresh fails, clear tokens to force re-authentication
       await clearOAuthTokens();
       throw new Error("Authentication expired. Please re-authenticate.");

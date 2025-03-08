@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import { parseArgs } from "node:util";
 import { AppSettingsSchema, type AppSettings } from "./types";
+import { logError as logError } from "./logger";
 
 const defaultConfigPath = "~/.config/ticktick-tui/config.json";
 
@@ -56,7 +57,7 @@ export const loadConfig = (
       if (value) setValueByPath(config, key, parseValue(value as string));
     });
   } catch (error) {
-    console.error("Error parsing CLI args:", error);
+    logError("Error parsing CLI args:", error);
   }
 
   // Validate final config
@@ -77,7 +78,7 @@ export function saveConfig(config: AppSettings): void {
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
   } catch (error) {
-    console.error("Error saving config to disk:", error);
+    logError("Error saving config to disk:", error);
   }
 }
 

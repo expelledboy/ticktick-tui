@@ -1,4 +1,4 @@
-import { debug, error } from "../logs";
+import { debug, logError } from "../logger";
 
 // Rate limiting configuration
 const RATE_LIMIT = {
