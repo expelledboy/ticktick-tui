@@ -2,10 +2,8 @@
 import fs from "node:fs";
 import { parseArgs } from "node:util";
 import { AppSettingsSchema, type AppSettings } from "./types";
-import { z } from "zod";
-import type { ParseArgsConfig } from "node:util";
 
-const defaultConfigPath = "~/.config/ticktick-sync/config.json";
+const defaultConfigPath = "~/.config/ticktick-tui/config.json";
 
 /**
  * Loads config from disk, env vars, and CLI args
@@ -110,7 +108,7 @@ const setValueByPath = (obj: any, path: string, value: any): void => {
   current[parts[parts.length - 1]] = value;
 };
 
-const config = loadConfig();
+export const config = loadConfig();
 
 // Declare the global type
 declare global {

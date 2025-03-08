@@ -1,5 +1,6 @@
 import { z } from "zod";
 import * as schema from "./schema";
+import path from "node:path";
 
 /**
  * Type definitions for the TickTick API
@@ -36,6 +37,17 @@ export type SyncStatus = {
   isSyncing: boolean;
   lastSyncTime: Date | null;
   error: string | null;
+};
+
+/**
+ * Transforms paths to be absolute, replacing ~ with the HOME directory
+ */
+const transformPaths = (paths: Record<string, string>) => {
+  const home = process.env.HOME;
+  if (!home) throw new Error("HOME environment variable is not set");
+  return Object.fromEntries(
+    Object.entries(paths).map(([key, path]) => [key, path.replace("~", home)])
+  );
 };
 
 /**
@@ -94,11 +106,13 @@ export const AppSettingsSchema = z.object({
 
   // Storage
   storage: z.object({
-    config: z.string().default("~/.config/ticktick-sync/config.json").describe("Path to the configuration file"),
-    credentials: z.string().default("~/.config/ticktick-sync/credentials.json").describe("Path to the credentials file"),
-    logs: z.string().default("/var/log/ticktick-sync.log").describe("Path to the logs file"),
-    cache: z.string().default("~/.cache/ticktick-sync/cache.json").describe("Path to the cache file"),
-  }).default({}),
+    config: z.string().default("~/.config/ticktick-tui/config.json").describe("Path to the configuration file"),
+    credentials: z.string().default("~/.config/ticktick-tui/credentials.json").describe("Path to the credentials file"),
+    logs: z.string().default("~/.cache/ticktick-tui/logs.log").describe("Path to the logs file"),
+    cache: z.string().default("~/.cache/ticktick-tui/cache.json").describe("Path to the cache file"),
+  })
+    .default({})
+    .transform(transformPaths),
 });
 
 // Use type inference from the schema
