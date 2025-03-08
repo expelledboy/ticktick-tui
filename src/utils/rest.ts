@@ -66,7 +66,7 @@ export const makeRequest = async <T>(
   body?: unknown
 ): Promise<T> => {
   if (!authToken) {
-    throw new Error("No authentication token found");
+    throw new ApiError("No authentication token found", 500, path);
   }
 
   await enforceRateLimit();
@@ -85,7 +85,11 @@ export const makeRequest = async <T>(
   const response = await fetchRetry(url, requestOptions);
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new ApiError(
+      `HTTP error! status: ${response.status}`,
+      response.status,
+      url
+    );
   }
 
   return response.json() as Promise<T>;
@@ -105,9 +109,7 @@ async function fetchRetry(
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
-      if (response.ok) {
-        return response.json();
-      }
+      if (response.ok) return response;
     } catch (error) {
       if (isRateLimitError(error)) {
         if (i === retries - 1) {
