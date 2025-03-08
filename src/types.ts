@@ -46,26 +46,26 @@ export type SyncStatus = {
 export const AppSettingsSchema = z.object({
   // UI
   theme: z.object({
-    primary: z.string().describe("Primary theme color"),
-    secondary: z.string().describe("Secondary theme color"),
-    accent: z.string().describe("Accent theme color"),
-    error: z.string().describe("Error message color"),
-    warning: z.string().describe("Warning message color"),
-  }),
+    primary: z.string().default("#4A90E2").describe("Primary theme color"),
+    secondary: z.string().default("#6B7280").describe("Secondary theme color"),
+    accent: z.string().default("#10B981").describe("Accent theme color"),
+    error: z.string().default("#EF4444").describe("Error message color"),
+    warning: z.string().default("#F59E0B").describe("Warning message color"),
+  }).default({}),
   
   pagination: z.object({
-    pageSize: z.number().int().positive().describe("Number of items per page"),
-  }),
+    pageSize: z.number().int().positive().default(20).describe("Number of items per page"),
+  }).default({}),
   
-  dateFormat: z.string().describe("Date display format pattern"),
-  timeFormat: z.string().describe("Time display format pattern"),
+  dateFormat: z.string().default("yyyy-MM-dd").describe("Date display format pattern"),
+  timeFormat: z.string().default("HH:mm").describe("Time display format pattern"),
 
   // Sync
   sync: z.object({
-    interval: z.number().int().positive().describe("Milliseconds between automatic sync attempts"),
-    retryDelay: z.number().int().positive().describe("Milliseconds to wait before retrying a failed sync"),
-    maxRetries: z.number().int().nonnegative().describe("Maximum number of sync retry attempts"),
-  }),
+    interval: z.number().int().positive().default(300000).describe("Milliseconds between automatic sync attempts"),
+    retryDelay: z.number().int().positive().default(60000).describe("Milliseconds to wait before retrying a failed sync"),
+    maxRetries: z.number().int().nonnegative().default(3).describe("Maximum number of sync retry attempts"),
+  }).default({}),
 
   // Keybindings
   keybindings: z.object({
@@ -85,12 +85,12 @@ export const AppSettingsSchema = z.object({
     toggleGlobalSearch: z.string().default("ctrl+g").describe("Toggle global search"),
     switchToLogs: z.string().default("ctrl+l").describe("Switch to logs mode"),
     switchToDebug: z.string().default("ctrl+d").describe("Switch to debug mode"),
-  }),
+  }).default({}),
 
   // Services
   services: z.object({
-    ticktickUri: z.string().url().describe("Base URI for TickTick API service"),
-  }),
+    ticktickUri: z.string().url().default("https://api.ticktick.com/open/v1").describe("Base URI for TickTick API service"),
+  }).default({}),
 
   // Storage
   storage: z.object({
@@ -98,7 +98,7 @@ export const AppSettingsSchema = z.object({
     credentials: z.string().default("~/.config/ticktick-sync/credentials.json").describe("Path to the credentials file"),
     logs: z.string().default("/var/log/ticktick-sync.log").describe("Path to the logs file"),
     cache: z.string().default("~/.cache/ticktick-sync/cache.json").describe("Path to the cache file"),
-  }),
+  }).default({}),
 });
 
 // Use type inference from the schema
