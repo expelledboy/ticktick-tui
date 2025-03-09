@@ -6,13 +6,13 @@ const QUERY_KEYS = {
   projectData: (id: string) => ["projectData", id],
 };
 
-export const useProjects = () =>
+export const useRemoteProjects = () =>
   useQuery({
     queryKey: QUERY_KEYS.projects,
     queryFn: () => api.getProjects(),
   });
 
-export const useProjectData = (id: string) =>
+export const useRemoteProjectData = (id: string) =>
   useQuery({
     queryKey: QUERY_KEYS.projectData(id),
     queryFn: () => api.getProjectData(id),

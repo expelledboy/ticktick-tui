@@ -3,8 +3,6 @@ import { config } from "./config";
 import { dirname } from "node:path";
 import { useAppStore } from "../store"; // Import the store
 
-const DEBUG = process.env.TICKTICK_DEBUG === "true";
-
 // Expand the path to replace ~ with the user's home directory
 const logFile = config.storage.logs;
 const logDir = dirname(logFile);
@@ -46,7 +44,11 @@ export type LogOperation =
   | "TASK_SELECT"
   // Other operations
   | "STORAGE"
-  | "CONFIG";
+  | "CONFIG"
+  | "KEYBINDING"
+  | "KEYBINDING_TRIGGERED"
+  | "CHANGE_FOCUS"
+  | "DEBUG";
 
 /**
  * Format a log entry with key-value pairs
@@ -72,17 +74,18 @@ const formatLogData = (
   return `[${operation}] ${pairs}`;
 };
 
+// Dev only logs
+export const __DEBUG = (msg: string, data?: Record<string, any>): void => {
+  const message = formatLogData("DEBUG", { msg, data: JSON.stringify(data) });
+  updateStoreLog("DEBUG", message);
+};
+
 /**
  * Updates the store with a log entry
  */
 const updateStoreLog = (level: LogLevel, message: string): void => {
-  try {
-    // Get the store instance and update it
-    const store = useAppStore.getState();
-    store.addLog(level, message);
-  } catch (error) {
-    console.error("Failed to update log in store", error);
-  }
+  const store = useAppStore.getState();
+  store.addLog(level, message);
 };
 
 /**
@@ -98,9 +101,8 @@ const logToFile = (level: LogLevel, message: string): void => {
     console.error("Failed to write to log file", error);
   }
 };
-
 /**
- * Log a debug message - only to console and store, not to file
+ * Log a debug message - only to in app logs
  * @param operation The operation being performed
  * @param data Key-value pairs to include in the log
  */
@@ -109,8 +111,6 @@ export const debug = (
   data: Record<string, any> = {}
 ): void => {
   const message = formatLogData(operation, data);
-
-  if (DEBUG) console.debug("DEBUG", message);
 
   // DEBUG logs are not written to file
   updateStoreLog("DEBUG", message);

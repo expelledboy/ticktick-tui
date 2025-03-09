@@ -1,131 +1,98 @@
 import { create } from "zustand";
-import type { ProjectData, Task } from "../core/types";
-import type { Project } from "../core/types";
-import type { LogLevel } from "../core/logger";
-import { syncProjectData } from "./syncProjectData";
-import { getNear } from "./getNear";
-type AppView = "projects" | "tasks";
+import { createUISlice } from "./uiSlice";
+import { createDataSlice } from "./dataSlice";
+import { createLogsSlice } from "./logsSlice";
+import { createNavigationSlice } from "./navigationSlice";
 
-// Updated log entry type with level
-type LogEntry = {
-  timestamp: Date;
-  level: LogLevel;
-  message: string;
-};
+type Store = ReturnType<typeof createUISlice> &
+  ReturnType<typeof createDataSlice> &
+  ReturnType<typeof createLogsSlice> &
+  ReturnType<typeof createNavigationSlice>;
 
-type AppState = {
-  debugMode: boolean;
-  viewProjects: boolean;
-  viewLogs: boolean;
-  activeView: AppView;
-  viewState: {
-    [key in AppView]: {
-      focusedId: string | null;
-      selectedId: string | null;
-    };
+// Create the combined store
+export const useAppStore = create<Store>((...a) => ({
+  ...createUISlice(...a),
+  ...createDataSlice(...a),
+  ...createLogsSlice(...a),
+  ...createNavigationSlice(...a),
+}));
+
+export const useProjects = () => {
+  const activeView = useAppStore((s) => s.activeView);
+  const projects = useAppStore((s) => s.projects);
+  const focusedId = useAppStore((s) => s.focusedId);
+
+  return {
+    isFocused: activeView === "projects",
+    focusedProjectId: activeView === "projects" ? focusedId : null,
+    projects,
+    moveFocus: useAppStore((s) => s.moveFocus),
+    toggleSelection: useAppStore((s) => s.toggleSelection),
+    updateProjects: useAppStore((s) => s.updateProjects),
   };
-  projects: Project[];
-  tasks: Task[];
-  // Add logs array to store recent log entries
-  logs: LogEntry[];
 };
 
-type AppActions = {
-  toggleDebugMode: () => void;
-  toggleViewProjects: () => void;
-  toggleViewLogs: () => void;
-  setActiveView: (view: AppView) => void;
-  selectProject: (projectId: string) => void;
-  selectTask: (taskId: string) => void;
-  // Updated log action with level
-  addLog: (level: LogLevel, message: string) => void;
+export const useProject = (projectId: string) => {
+  const focusedId = useAppStore((s) => s.focusedId);
+  const active = useAppStore((s) => s.active);
+  const project = useAppStore(
+    (s) => s.projects.find((p) => p.project.id === projectId)?.project
+  );
+
+  if (!project) {
+    throw new Error(`Project ${projectId} not found`);
+  }
+
+  return {
+    project,
+    isFocused: focusedId === projectId,
+    isActive: active.projects === projectId,
+    toggleSelection: useAppStore((s) => s.toggleSelection),
+  };
 };
 
-type AppNavigators = {
-  focus: (view: AppView, direction: "next" | "previous") => void;
+export const useTasks = (projectId: string) => {
+  const activeView = useAppStore((s) => s.activeView);
+  const activeProjectId = useAppStore((s) => s.active.projects);
+  const focusedId = useAppStore((s) => s.focusedId);
+  const project = useAppStore((s) =>
+    s.projects.find((p) => p.project.id === activeProjectId)
+  );
+
+  if (!project) {
+    throw new Error(`Project ${projectId} not found`);
+  }
+
+  return {
+    isFocused: activeView === "tasks",
+    focusedTaskId: activeView === "tasks" ? focusedId : null,
+    project: project.project,
+    tasks: project.tasks,
+    moveFocus: useAppStore((s) => s.moveFocus),
+    toggleSelection: useAppStore((s) => s.toggleSelection),
+    updateProjectData: useAppStore((s) => s.updateProjectData),
+  };
 };
 
-type AppSetters = {
-  updateProjects: (projects: Project[]) => void;
-  updateProjectData: (projectData: ProjectData) => void;
+export const useTask = (projectId: string, taskId: string) => {
+  const focusedId = useAppStore((s) => s.focusedId);
+  const active = useAppStore((s) => s.active);
+  const selectedTaskIds = useAppStore((s) => s.selectedTaskIds);
+  const task = useAppStore((s) =>
+    s.projects
+      .find((p) => p.project.id === projectId)
+      ?.tasks.find((t) => t.id === taskId)
+  );
+
+  if (!task) {
+    throw new Error(`Task ${taskId} not found in project ${projectId}`);
+  }
+
+  return {
+    task,
+    isFocused: focusedId === taskId,
+    isSelected: selectedTaskIds.has(taskId),
+    isActive: active.tasks === taskId,
+    toggleSelection: useAppStore((s) => s.toggleSelection),
+  };
 };
-
-const initialState: AppState = {
-  debugMode: false,
-  viewProjects: true,
-  viewLogs: false,
-  activeView: "projects",
-  viewState: {
-    projects: {
-      focusedId: null,
-      selectedId: null,
-    },
-    tasks: {
-      focusedId: null,
-      selectedId: null,
-    },
-  },
-  projects: [],
-  tasks: [],
-  // Initialize empty logs array
-  logs: [],
-};
-
-/* prettier-ignore */
-export const useAppStore = create<AppState & AppActions & AppNavigators & AppSetters>(
-  (set, get) => ({
-    ...initialState,
-
-    // Actions
-    toggleDebugMode: () => set((s) => ({ debugMode: !s.debugMode })),
-    toggleViewProjects: () => set((s) => ({ viewProjects: !s.viewProjects })),
-    toggleViewLogs: () => set((s) => ({ viewLogs: !s.viewLogs })),
-    setActiveView: (view: AppView) => set({ activeView: view }),
-
-    selectProject: (projectId: string) => set(() => ({
-      activeView: "tasks",
-      viewState: {
-        projects: { selectedId: projectId, focusedId: projectId, },
-        // TODO: We could "remember" focusedId per project, meh
-        tasks: { selectedId: null, focusedId: null },
-      },
-    })),
-    selectTask: (taskId: string) => set((s) => ({
-      viewState: {
-        ...s.viewState,
-        tasks: { selectedId: taskId, focusedId: taskId },
-      },
-    })),
-    
-    // Updated log action with level
-    addLog: (level: LogLevel, message: string) => set((s) => {
-      const newLog: LogEntry = {
-        timestamp: new Date(),
-        level,
-        message,
-      };
-      
-      // Keep only the 10 most recent logs (add to beginning)
-      const logs = [newLog, ...s.logs].slice(0, 10);
-      
-      return { logs };
-    }),
-
-    // Navigators
-    focus: (view: AppView, direction: "next" | "previous") => set((s) => {
-      const { focusedId, selectedId } = s.viewState[view];
-      const list = view === "projects" ? get().projects : get().tasks.filter(t => t.projectId === s.viewState.projects.selectedId);
-      const nextId = getNear(direction, list, focusedId);
-      return { viewState: { ...s.viewState, [view]: { focusedId: nextId, selectedId } } };
-    }),
-
-    // Setters
-    updateProjects: (projects: Project[]) => {
-      set({ projects });
-    },
-    updateProjectData: (projectData: ProjectData) => {
-      const { projects, tasks } = syncProjectData(get().projects, get().tasks, projectData);
-      set({ projects, tasks });
-    },
-  })
-);

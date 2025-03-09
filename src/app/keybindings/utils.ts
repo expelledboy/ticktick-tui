@@ -21,10 +21,40 @@ export const emptyKey: Key = {
 
 // Common arrow key combinations
 export const arrow = {
-  up: { input: "", key: { ...emptyKey, upArrow: true } },
-  down: { input: "", key: { ...emptyKey, downArrow: true } },
-  left: { input: "", key: { ...emptyKey, leftArrow: true } },
-  right: { input: "", key: { ...emptyKey, rightArrow: true } },
+  up: {
+    input: "",
+    key: { ...emptyKey, upArrow: true },
+    configured: "upArrow",
+  },
+  down: {
+    input: "",
+    key: { ...emptyKey, downArrow: true },
+    configured: "downArrow",
+  },
+  left: {
+    input: "",
+    key: { ...emptyKey, leftArrow: true },
+    configured: "leftArrow",
+  },
+  right: {
+    input: "",
+    key: { ...emptyKey, rightArrow: true },
+    configured: "rightArrow",
+  },
+};
+
+// Special keys
+export const key = {
+  return: {
+    input: "\r",
+    key: { ...emptyKey, return: true, shift: true },
+    configured: "enter",
+  },
+  space: {
+    input: " ",
+    key: { ...emptyKey, shift: true },
+    configured: "space",
+  },
 };
 
 // Parse a keybinding string (e.g., "ctrl+s") into input and key components
@@ -33,6 +63,7 @@ export const parseKeybinding = (
 ): {
   input: string;
   key: Key;
+  configured?: string;
 } => {
   const binding = keybinding.toLowerCase().split("+");
 
@@ -44,6 +75,7 @@ export const parseKeybinding = (
       shift: binding.includes("shift"),
       meta: binding.includes("meta"),
     },
+    configured: keybinding,
   };
 };
 

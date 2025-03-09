@@ -6,4 +6,7 @@ test:
     @ bun test --preload ./src/ticktick/api.mock
 
 dev:
-    @ bun run ./src/index.ts
+    bun run ./src/index.ts
+
+typecheck:
+    bun tsc --noEmit

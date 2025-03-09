@@ -1,28 +1,26 @@
 import { useEffect } from "react";
-import { useAppStore } from "../../store";
-import { useProjects } from "../query";
+import { useAppStore, useProject, useProjects } from "../../store";
+import { useRemoteProjects } from "../query";
 import { Box, Text, useFocus, useInput } from "ink";
 import { type Project } from "../../core/types";
 import { debug, info } from "../../core/logger";
 
 /**
  * Component to display the list of projects
- * Provides navigation and selection of projects
  */
 export const Projects = () => {
-  const { data, isLoading, error } = useProjects();
-  const updateProjects = useAppStore((s) => s.updateProjects);
-  const selectProject = useAppStore((s) => s.selectProject);
+  const { data, isLoading, error } = useRemoteProjects();
+  const { projects, updateProjects } = useProjects();
+  const setActiveView = useAppStore((s) => s.setActiveView);
 
   useEffect(() => {
     if (data) {
+      // Update store for sorting
       updateProjects(data);
       // Log when projects are loaded
       info("PROJECT_LOAD", { count: data.length });
-    }
-
-    if (data?.length) {
-      selectProject(data[0].id);
+      // Set the active view to projects, as this is the first load
+      setActiveView("projects");
     }
   }, [data]);
 
@@ -45,48 +43,20 @@ export const Projects = () => {
       <Text bold color={config.theme.primary}>
         Projects
       </Text>
-      {data?.map((project) => <Project key={project.id} project={project} />)}
+      {projects.map((project) => (
+        <Project key={project.project.id} projectId={project.project.id} />
+      ))}
     </Box>
   );
 };
 
-const Project = ({ project }: { project: Project }) => {
-  const activeView = useAppStore((s) => s.activeView);
-  const focusedProjectId = useAppStore((s) => s.viewState.projects.focusedId);
-  const selectProject = useAppStore((s) => s.selectProject);
-  const isSelected =
-    useAppStore((s) => s.viewState.projects.selectedId) === project.id;
-
-  const isActive = activeView === "projects";
-
-  const { isFocused } = useFocus({
-    isActive,
-    autoFocus: isActive && focusedProjectId === project.id,
-    id: project.id,
-  });
-
-  // Log when project is selected
-  useEffect(() => {
-    if (isSelected) {
-      debug("PROJECT_SELECT", {
-        id: project.id,
-        name: project.name,
-      });
-    }
-  }, [isSelected, project.id, project.name]);
-
-  useInput(
-    (input, key) => {
-      if (key.return) {
-        selectProject(project.id);
-      }
-    },
-    { isActive: isFocused }
-  );
+const Project = ({ projectId }: { projectId: string }) => {
+  const { project, isActive } = useProject(projectId);
+  const { isFocused } = useFocus({ id: projectId });
 
   return (
     <Box>
-      <Text color={isSelected ? config.theme.accent : "white"}>
+      <Text color={isActive ? config.theme.accent : "white"}>
         {isFocused ? "› " : "  "}
         {fixProblematicEmojis(project.name).trim()}
       </Text>

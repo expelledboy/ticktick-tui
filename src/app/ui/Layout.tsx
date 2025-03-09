@@ -6,6 +6,7 @@ import { Projects } from "./Projects";
 import { Tasks } from "./Tasks";
 import { DebugPanel } from "./DebugPanel";
 import { LogsPanel } from "./LogsPanel";
+import { __DEBUG } from "../../core/logger";
 
 /**
  * Main layout component that manages the positioning of all UI elements
@@ -16,13 +17,16 @@ export const Layout: React.FC = () => {
   const { width, height } = useTerminalDimensions();
 
   // Get app state
-  const viewProjects = useAppStore((s) => s.viewProjects);
-  const selectedProjectId = useAppStore((s) => s.viewState.projects.selectedId);
   const debugMode = useAppStore((s) => s.debugMode);
   const viewLogs = useAppStore((s) => s.viewLogs);
+  const viewProjects = useAppStore((s) => s.viewProjects);
+  const logLines = useAppStore((s) => s.logLines);
+
+  // Get view state
+  const activeProjectId = useAppStore((s) => s.active.projects);
 
   // Calculate logs panel height - enough for 10 entries + header + borders
-  const logsHeight = viewLogs ? 13 : 0;
+  const logsHeight = viewLogs ? logLines + 3 : 0;
 
   // Calculate main content height as remaining space
   const mainContentHeight = height - logsHeight;
@@ -63,11 +67,9 @@ export const Layout: React.FC = () => {
         </Box>
 
         {/* Tasks Panel */}
-        {selectedProjectId && (
-          <Box borderStyle="round" borderColor="green" width={tasksWidth}>
-            <Tasks projectId={selectedProjectId} />
-          </Box>
-        )}
+        <Box borderStyle="round" borderColor="green" width={tasksWidth}>
+          {activeProjectId && <Tasks projectId={activeProjectId} />}
+        </Box>
       </Box>
 
       {/* Logs Panel - Full Width at Bottom */}

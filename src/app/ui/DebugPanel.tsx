@@ -6,16 +6,23 @@ import { useAppStore } from "../../store";
  * Shows current application state and keyboard shortcuts
  */
 export const DebugPanel = () => {
-  const { activeView, viewState } = useAppStore();
+  const { activeView, focusedId, active, selectedTaskIds, lastFocused } =
+    useAppStore();
 
   return (
     <Box flexDirection="column">
       <Text bold>Debug Information</Text>
       <Text>Active View: {activeView}</Text>
-      <Text>Projects Focus: {viewState.projects.focusedId || "none"}</Text>
-      <Text>Projects Selected: {viewState.projects.selectedId || "none"}</Text>
-      <Text>Tasks Focus: {viewState.tasks.focusedId || "none"}</Text>
-      <Text>Tasks Selected: {viewState.tasks.selectedId || "none"}</Text>
+      <Text>Focused: {focusedId || "none"}</Text>
+      <Text>Active Project: {active.projects}</Text>
+      <Text>Active Task: {active.tasks}</Text>
+      <Text>Last Focused Project: {lastFocused.projects}</Text>
+      <Text>Last Focused Task: {lastFocused.tasks}</Text>
+      <Box flexDirection="column">
+        {Array.from(selectedTaskIds).map((taskId) => (
+          <Text key={taskId}>{taskId}</Text>
+        ))}
+      </Box>
       <Text bold>Keyboard Shortcuts:</Text>
       <Text>Ctrl+D: Toggle Debug Panel Ctrl+L: Toggle Logs Panel</Text>
     </Box>

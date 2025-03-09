@@ -1,6 +1,7 @@
 import { useFocusManager } from "ink";
 import { useEffect } from "react";
 import { useAppStore } from "../../store";
+import { debug } from "../../core/logger";
 
 /**
  * Hook for syncing the application store focus state with Ink's focus manager
@@ -10,17 +11,12 @@ export const useStoreFocusManager = () => {
   const { disableFocus, focus } = useFocusManager();
 
   // Disable default focus behavior
-  useEffect(disableFocus, []);
+  useEffect(disableFocus, [disableFocus]);
 
   // Sync task focus from store to Ink
-  const focusedTaskId = useAppStore((s) => s.viewState.tasks.focusedId);
-  useEffect(() => {
-    if (focusedTaskId) focus(focusedTaskId);
-  }, [focusedTaskId]);
+  const focusedId = useAppStore((s) => s.focusedId);
 
-  // Sync project focus from store to Ink
-  const focusedProjectId = useAppStore((s) => s.viewState.projects.focusedId);
   useEffect(() => {
-    if (focusedProjectId) focus(focusedProjectId);
-  }, [focusedProjectId]);
+    if (focusedId) focus(focusedId);
+  }, [focusedId]);
 };
