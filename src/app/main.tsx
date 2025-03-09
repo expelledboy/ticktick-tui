@@ -46,7 +46,10 @@ export const runApp = async () => {
     while (queryClient.isMutating()) {
       // Check if we've exceeded the timeout
       if (Date.now() - startTime > timeout) {
-        logError("Timeout waiting for mutations to complete. Forcing exit...");
+        logError("APP_EXIT", {
+          error: "timeout_waiting_for_mutations",
+          timeout_ms: timeout,
+        });
         break;
       }
       await new Promise((resolve) => setTimeout(resolve, 100));

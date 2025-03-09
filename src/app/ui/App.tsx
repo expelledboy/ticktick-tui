@@ -1,35 +1,39 @@
-import { Box, Text } from "ink";
-import { useAppStore } from "../store";
-import { Projects } from "./Projects";
-import { Tasks } from "./Tasks";
+import React, { useEffect } from "react";
 import { useKeyboardNavigation, useStoreFocusManager } from "../keybindings";
+import { debug, info } from "../../logger";
+import { useAppStore } from "../store";
+import { Layout } from "./Layout";
 
+/**
+ * Main application component
+ * Handles initialization, keyboard navigation, and renders the layout
+ */
 export const App = () => {
-  const activeView = useAppStore((s) => s.activeView);
-  const viewProjects = useAppStore((s) => s.viewProjects);
-  const selectedProjectId = useAppStore((s) => s.viewState.projects.selectedId);
+  const debugMode = useAppStore((s) => s.debugMode);
+  const viewLogs = useAppStore((s) => s.viewLogs);
+
+  // Add a log entry when the app starts
+  useEffect(() => {
+    info("APP_START", { timestamp: new Date().toISOString() });
+  }, []);
+
+  // Log when panels are toggled
+  useEffect(() => {
+    if (debugMode) {
+      debug("PANEL_TOGGLE", { panel: "debug", state: "open" });
+    }
+  }, [debugMode]);
+
+  useEffect(() => {
+    if (viewLogs) {
+      debug("PANEL_TOGGLE", { panel: "logs", state: "open" });
+    }
+  }, [viewLogs]);
 
   // Handle keyboard navigation
   useKeyboardNavigation();
   useStoreFocusManager();
 
-  return (
-    <Box flexDirection="column">
-      <Box flexDirection="row">
-        <Text>Active View: {activeView}</Text>
-      </Box>
-      <Box flexDirection="row">
-        {viewProjects && (
-          <Box width={30} borderStyle="round" borderColor="green">
-            <Projects />
-          </Box>
-        )}
-        {selectedProjectId && (
-          <Box width={100} borderStyle="round" borderColor="green">
-            <Tasks projectId={selectedProjectId} />
-          </Box>
-        )}
-      </Box>
-    </Box>
-  );
+  // Render the layout using our new Layout component
+  return <Layout />;
 };

@@ -1,8 +1,16 @@
 import { create } from "zustand";
 import type { ProjectData, Task } from "../types";
 import type { Project } from "../types";
+import type { LogLevel } from "../logger";
 
 type AppView = "projects" | "tasks";
+
+// Updated log entry type with level
+type LogEntry = {
+  timestamp: Date;
+  level: LogLevel;
+  message: string;
+};
 
 type AppState = {
   debugMode: boolean;
@@ -17,6 +25,8 @@ type AppState = {
   };
   projects: Project[];
   tasks: Task[];
+  // Add logs array to store recent log entries
+  logs: LogEntry[];
 };
 
 type AppActions = {
@@ -26,6 +36,8 @@ type AppActions = {
   setActiveView: (view: AppView) => void;
   selectProject: (projectId: string) => void;
   selectTask: (taskId: string) => void;
+  // Updated log action with level
+  addLog: (level: LogLevel, message: string) => void;
 };
 
 type AppNavigators = {
@@ -54,6 +66,8 @@ const initialState: AppState = {
   },
   projects: [],
   tasks: [],
+  // Initialize empty logs array
+  logs: [],
 };
 
 const getNear = (
@@ -97,6 +111,20 @@ export const useAppStore = create<AppState & AppActions & AppNavigators & AppSet
         tasks: { selectedId: taskId, focusedId: taskId },
       },
     })),
+    
+    // Updated log action with level
+    addLog: (level: LogLevel, message: string) => set((s) => {
+      const newLog: LogEntry = {
+        timestamp: new Date(),
+        level,
+        message,
+      };
+      
+      // Keep only the 10 most recent logs (add to beginning)
+      const logs = [newLog, ...s.logs].slice(0, 10);
+      
+      return { logs };
+    }),
 
     // Navigators
     focus: (view: AppView, direction: "next" | "previous") => set((s) => {

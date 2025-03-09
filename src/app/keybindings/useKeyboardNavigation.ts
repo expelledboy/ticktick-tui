@@ -8,7 +8,8 @@ import { arrow, binds, matchKeybinding, parseKeybinding } from "./utils";
  */
 export const useKeyboardNavigation = () => {
   const { exit } = useApp();
-  const { activeView, setActiveView, focus } = useAppStore();
+  const { activeView, setActiveView, focus, toggleDebugMode, toggleViewLogs } =
+    useAppStore();
 
   // Array to store all active keybindings
   const bindings: {
@@ -42,8 +43,15 @@ export const useKeyboardNavigation = () => {
   bind("tasks", binds.navUp, () => focus("tasks", "previous"));
   bind("tasks", binds.navLeft, () => setActiveView("projects"));
 
-  // Global bindings
+  // Global bindings - available in any mode
   bind("projects", binds.exitProgram, () => exit());
+  bind("tasks", binds.exitProgram, () => exit());
+
+  // Debug and logs toggle bindings - available in any mode
+  bind("projects", binds.toggleDebug, toggleDebugMode);
+  bind("tasks", binds.toggleDebug, toggleDebugMode);
+  bind("projects", binds.toggleLogs, toggleViewLogs);
+  bind("tasks", binds.toggleLogs, toggleViewLogs);
 
   // Register input handler
   useInput((input, key) => {

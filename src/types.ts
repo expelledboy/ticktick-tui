@@ -88,6 +88,8 @@ export const AppSettingsSchema = z.object({
     navRight: z.string().default("l").describe("Navigate right"),
     // UI control
     toggleSidebar: z.string().default("ctrl+p").describe("Shortcut for toggling the projects sidebar"),
+    toggleDebug: z.string().default("ctrl+d").describe("Toggle debug panel"),
+    toggleLogs: z.string().default("ctrl+l").describe("Toggle logs panel"),
     exitProgram: z.string().default("q").describe("Exit the program"),
     // Task actions
     addTask: z.string().default("a").describe("Add a new task"),
@@ -99,9 +101,6 @@ export const AppSettingsSchema = z.object({
     // Search
     search: z.string().default("/").describe("Start search"),
     toggleGlobalSearch: z.string().default("ctrl+g").describe("Toggle global search"),
-    // Debug
-    switchToLogs: z.string().default("ctrl+l").describe("Switch to logs mode"),
-    switchToDebug: z.string().default("ctrl+d").describe("Switch to debug mode"),
   }).default({}),
 
   // Services

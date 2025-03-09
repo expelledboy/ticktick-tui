@@ -1,4 +1,5 @@
 import { debug, logError } from "../logger";
+import { config } from "../config";
 
 // Rate limiting configuration
 const RATE_LIMIT = {
@@ -26,15 +27,16 @@ async function enforceRateLimit(): Promise<void> {
       currentDelay *
       Math.pow(RATE_LIMIT.backoffMultiplier, RATE_LIMIT.retryCount);
 
-    debug(
-      `Rate limit backoff level ${RATE_LIMIT.retryCount}: Using ${currentDelay}ms delay`
-    );
+    debug("API_RATE_LIMIT", {
+      backoff_level: RATE_LIMIT.retryCount,
+      delay_ms: currentDelay,
+    });
   }
 
   // If we haven't waited long enough, delay the request
   if (timeSinceLastRequest < currentDelay) {
     const waitTime = currentDelay - timeSinceLastRequest;
-    debug(`Rate limiting: waiting ${waitTime}ms before next request`);
+    debug("API_RATE_LIMIT", { wait_ms: waitTime });
     await new Promise((resolve) => setTimeout(resolve, waitTime));
   }
 
@@ -82,15 +84,30 @@ export const makeRequest = async <T>(
   if (body) requestOptions.body = JSON.stringify(body);
 
   const url = `${config.services.ticktickUri}${path}`;
+
+  debug("API_REQUEST", {
+    method,
+    path,
+    has_body: body ? true : false,
+  });
+
   const response = await fetchRetry(url, requestOptions);
 
   if (!response.ok) {
-    throw new ApiError(
-      `HTTP error! status: ${response.status}`,
-      response.status,
-      url
-    );
+    const errorMsg = `HTTP error! status: ${response.status}`;
+    logError("API_ERROR", {
+      status: response.status,
+      path,
+      method,
+    });
+    throw new ApiError(errorMsg, response.status, url);
   }
+
+  debug("API_RESPONSE", {
+    path,
+    method,
+    status: response.status,
+  });
 
   return response.json() as Promise<T>;
 };
@@ -104,34 +121,44 @@ async function fetchRetry(
   retries = RATE_LIMIT.maxRetries,
   delay = RATE_LIMIT.delayBetweenRequests
 ) {
-  let lastError: Error | null = null;
+  let lastError: unknown;
 
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url, options);
-      if (response.ok) return response;
+      return await fetch(url, options);
     } catch (error) {
+      lastError = error;
+
       if (isRateLimitError(error)) {
         if (i === retries - 1) {
-          debug(`⚠️ Reached maximum retries (${retries}) for ${url}`);
+          debug("API_ERROR", {
+            error: "rate_limit_max_retries",
+            retries,
+            url: url.split("/").slice(-1)[0], // Just the endpoint, not the full URL
+          });
           throw error;
         } else {
-          debug(`Rate limit error on attempt ${i + 1}/${retries}`);
-          debug(`Retrying ${url} after ${delay}ms...`);
+          debug("API_RATE_LIMIT", {
+            attempt: i + 1,
+            max_attempts: retries,
+            retry_delay_ms: delay,
+          });
+
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
+      } else {
+        throw error;
       }
     }
   }
 
-  throw (
-    lastError || new ApiError(`Failed to fetch ${url} after ${retries} retries`)
-  );
+  throw lastError;
 }
 
 const isRateLimitError = (error: unknown): boolean =>
   error instanceof ApiError && error.statusCode === 429;
 
 export const setAuthToken = (token: string) => {
+  debug("AUTH_TOKEN_SAVE", { token_length: token.length });
   authToken = token;
 };

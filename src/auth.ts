@@ -4,8 +4,8 @@
  * This module handles storage and retrieval of authentication credentials
  * and provides utilities for managing authentication state.
  */
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { debug, info, logError } from "./logger";
 import { config } from "./config";
 import type { OAuth2Tokens, OAuth2Config } from "./utils/oauth2";
@@ -42,35 +42,33 @@ export const ensureAuthStorageDir = (): void => {
   const dir = path.dirname(config.storage.credentials);
 
   if (!fs.existsSync(dir)) {
-    debug(`Creating auth storage directory: ${dir}`);
+    debug("STORAGE", { action: "create_dir", path: dir });
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 }); // Secure permissions - user only
   }
 };
 
 /**
- * Check if OAuth credentials exist
+ * Check if OAuth credentials are available
  */
 export const haveCredentials = (): boolean => {
-  try {
-    const credentialsPath = getCredentialsPath();
-    if (!fs.existsSync(credentialsPath)) {
-      return false;
-    }
+  const credentialsPath = getCredentialsPath();
 
+  try {
     const credentialsJson = fs.readFileSync(credentialsPath, "utf8");
     const credentials = JSON.parse(credentialsJson) as OAuth2Config;
 
     return !!credentials.clientId && !!credentials.clientSecret;
   } catch (err) {
-    debug(
-      `Error checking credentials: ${err instanceof Error ? err.message : String(err)}`
-    );
+    debug("AUTH_CREDS_LOAD", {
+      error: err instanceof Error ? err.message : String(err),
+      path: credentialsPath,
+    });
     return false;
   }
 };
 
 /**
- * Save OAuth client credentials
+ * Save OAuth credentials to disk
  */
 export const saveOAuthCredentials = async (
   credentials: OAuth2Config
@@ -79,62 +77,69 @@ export const saveOAuthCredentials = async (
   const credentialsPath = getCredentialsPath();
 
   try {
-    debug(`Saving OAuth credentials to ${credentialsPath}`);
+    debug("AUTH_CREDS_SAVE", { path: credentialsPath });
     fs.writeFileSync(
       credentialsPath,
       JSON.stringify(credentials, null, 2),
       { encoding: "utf8", mode: 0o600 } // Secure permissions - user read/write only
     );
-    info("OAuth credentials saved successfully");
+    info("AUTH_CREDS_SAVE", { success: true });
   } catch (err) {
     const errorMsg = `Failed to save OAuth credentials: ${err instanceof Error ? err.message : String(err)}`;
-    logError(errorMsg);
+    logError("AUTH_CREDS_SAVE", {
+      error: err instanceof Error ? err.message : String(err),
+      path: credentialsPath,
+    });
     throw new Error(errorMsg);
   }
 };
 
 /**
- * Load OAuth client credentials
+ * Load OAuth credentials from disk
  */
 export const loadOAuthCredentials = async (): Promise<OAuth2Config | null> => {
   const credentialsPath = getCredentialsPath();
 
   try {
-    debug(`Loading OAuth credentials from ${credentialsPath}`);
+    debug("AUTH_CREDS_LOAD", { path: credentialsPath });
     if (fs.existsSync(credentialsPath)) {
       const credentialsJson = fs.readFileSync(credentialsPath, "utf8");
-      return JSON.parse(credentialsJson) as OAuth2Config;
+      const credentials = JSON.parse(credentialsJson) as OAuth2Config;
+      return credentials;
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    logError("Failed to load OAuth credentials:", errorMsg);
+    logError("AUTH_CREDS_LOAD", {
+      error: errorMsg,
+      path: credentialsPath,
+    });
   }
 
   return null;
 };
 
 /**
- * Clear OAuth client credentials
+ * Clear OAuth credentials from disk
  */
 export const clearOAuthCredentials = async (): Promise<void> => {
   const credentialsPath = getCredentialsPath();
 
-  debug("Clearing OAuth credentials");
+  debug("AUTH_CLEAR", { type: "credentials", path: credentialsPath });
   if (fs.existsSync(credentialsPath)) {
     fs.unlinkSync(credentialsPath);
-    info("OAuth credentials cleared");
+    info("AUTH_CLEAR", { type: "credentials", success: true });
   }
 };
 
 /**
- * Save OAuth tokens to storage
+ * Save OAuth tokens to disk
  */
 export const saveOAuthTokens = async (tokens: OAuth2Tokens): Promise<void> => {
-  const tokenPath = getTokenStoragePath();
   ensureAuthStorageDir();
+  const tokenPath = getTokenStoragePath();
 
   try {
-    debug(`Saving tokens to ${tokenPath}`);
+    debug("AUTH_TOKEN_SAVE", { path: tokenPath });
     fs.writeFileSync(
       tokenPath,
       JSON.stringify(tokens, null, 2),
@@ -142,83 +147,88 @@ export const saveOAuthTokens = async (tokens: OAuth2Tokens): Promise<void> => {
     );
   } catch (err) {
     const errorMsg = `Failed to save authentication tokens: ${err instanceof Error ? err.message : String(err)}`;
-    logError(errorMsg);
+    logError("AUTH_TOKEN_SAVE", {
+      error: err instanceof Error ? err.message : String(err),
+      path: tokenPath,
+    });
     throw new Error(errorMsg);
   }
 };
 
 /**
- * Load OAuth tokens from storage
+ * Load OAuth tokens from disk
  */
 export const loadOAuthTokens = async (): Promise<OAuth2Tokens | null> => {
   const tokenPath = getTokenStoragePath();
 
   try {
-    debug(`Loading tokens from ${tokenPath}`);
+    debug("AUTH_TOKEN_LOAD", { path: tokenPath });
     if (fs.existsSync(tokenPath)) {
       const tokensJson = fs.readFileSync(tokenPath, "utf8");
       return JSON.parse(tokensJson) as OAuth2Tokens;
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    logError("Failed to load tokens:", errorMsg);
+    logError("AUTH_TOKEN_LOAD", {
+      error: errorMsg,
+      path: tokenPath,
+    });
   }
 
   return null;
 };
 
 /**
- * Check if OAuth tokens exist and are valid
+ * Check if we have valid (non-expired) OAuth tokens
  */
 export const haveValidTokens = async (): Promise<boolean> => {
-  try {
-    const tokens = await loadOAuthTokens();
-    if (!tokens) {
-      return false;
-    }
+  const tokens = await loadOAuthTokens();
 
+  try {
     return !isTokenExpired(tokens);
   } catch (err) {
-    debug(
-      `Error checking tokens: ${err instanceof Error ? err.message : String(err)}`
-    );
+    debug("AUTH_TOKEN_LOAD", {
+      error: err instanceof Error ? err.message : String(err),
+      action: "check_expiry",
+    });
     return false;
   }
 };
 
 /**
- * Clear stored OAuth tokens
+ * Clear OAuth tokens from disk
  */
 export const clearOAuthTokens = async (): Promise<void> => {
   const tokenPath = getTokenStoragePath();
 
-  debug("Clearing authentication tokens");
+  debug("AUTH_CLEAR", { type: "tokens", path: tokenPath });
   if (fs.existsSync(tokenPath)) {
     fs.unlinkSync(tokenPath);
-    info("OAuth tokens cleared");
+    info("AUTH_CLEAR", { type: "tokens", success: true });
   }
 };
 
 /**
- * Clear all OAuth data (both credentials and tokens)
+ * Clear all OAuth data from disk
  */
 export const clearAllOAuthData = async (): Promise<void> => {
   await clearOAuthCredentials();
   await clearOAuthTokens();
-  info("All OAuth data cleared");
+  info("AUTH_CLEAR", { type: "all", success: true });
 };
 
 /**
- * Start the OAuth2 authorization flow
+ * Start OAuth 2.0 flow to get tokens
  */
 export const startOAuthFlow = async (
   oauthConfig: OAuth2Config
 ): Promise<OAuth2Tokens> => {
-  return launchBrowserAuthorization(oauthConfig, saveOAuthTokens);
+  ensureAuthStorageDir();
+  return await launchBrowserAuthorization(oauthConfig, saveOAuthTokens);
 };
 
 /**
- * Process OAuth callback URL
+ * Process OAuth callback URL from the browser
  */
 export const processOAuthCallback = async (
   callbackUrl: string,
@@ -235,32 +245,31 @@ export const processOAuthCallback = async (
 export const getAccessToken = async (
   oauthConfig: OAuth2Config
 ): Promise<string> => {
-  // Try to load tokens from storage
   const tokens = await loadOAuthTokens();
 
   if (!tokens) {
     const errorMsg = "Not authenticated. Please authenticate first.";
-    logError(errorMsg);
+    logError("AUTH_TOKEN_LOAD", { error: "not_authenticated" });
     throw new Error(errorMsg);
   }
 
   // If token is expired, refresh it
   if (isTokenExpired(tokens)) {
-    info("Access token has expired, attempting to refresh...");
+    info("AUTH_TOKEN_REFRESH", { reason: "token_expired" });
     try {
       const newTokens = await refreshOAuthToken(
         tokens.refresh_token,
         oauthConfig
       );
       await saveOAuthTokens(newTokens);
-      info("Successfully refreshed access token");
+      info("AUTH_TOKEN_REFRESH", { success: true });
       return newTokens.access_token;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logError("Failed to refresh token:", errorMsg);
+      logError("AUTH_TOKEN_REFRESH", { error: errorMsg });
       // If refresh fails, clear tokens to force re-authentication
       await clearOAuthTokens();
-      throw new Error("Authentication expired. Please re-authenticate.");
+      throw err;
     }
   }
 

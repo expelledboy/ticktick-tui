@@ -78,7 +78,7 @@ export const exchangeCodeForTokens = async (
   code: string,
   config: OAuth2Config
 ): Promise<OAuth2Tokens> => {
-  debug(`Exchanging authorization code for tokens`);
+  debug("AUTH_FLOW", { step: "exchange_code", code_length: code.length });
   const redirectUri = config.redirectUri || DEFAULT_REDIRECT_URI;
 
   const response = await fetch(TICKTICK_TOKEN_URL, {
@@ -97,7 +97,7 @@ export const exchangeCodeForTokens = async (
   if (!response.ok) {
     const errorText = await response.text();
     const errorMsg = `Token exchange failed: ${response.status} - ${errorText}`;
-    logError(errorMsg);
+    logError("AUTH_ERROR", { error: errorMsg });
     throw new Error(errorMsg);
   }
 
@@ -108,7 +108,7 @@ export const exchangeCodeForTokens = async (
     tokens.expiry_time = Date.now() + tokens.expires_in * 1000;
   }
 
-  debug("Successfully received tokens");
+  debug("AUTH_FLOW", { step: "tokens_received" });
   return tokens;
 };
 
@@ -119,7 +119,7 @@ export const refreshAccessToken = async (
   refreshToken: string,
   config: OAuth2Config
 ): Promise<OAuth2Tokens> => {
-  debug("Refreshing access token");
+  debug("AUTH_TOKEN_REFRESH", { action: "start" });
 
   const response = await fetch(TICKTICK_TOKEN_URL, {
     method: "POST",
@@ -136,7 +136,7 @@ export const refreshAccessToken = async (
   if (!response.ok) {
     const errorText = await response.text();
     const errorMsg = `Token refresh failed: ${response.status} - ${errorText}`;
-    logError(errorMsg);
+    logError("AUTH_ERROR", { error: errorMsg });
     throw new Error(errorMsg);
   }
 
@@ -147,7 +147,7 @@ export const refreshAccessToken = async (
     tokens.expiry_time = Date.now() + tokens.expires_in * 1000;
   }
 
-  debug("Successfully refreshed tokens");
+  debug("AUTH_TOKEN_REFRESH", { success: true });
   return tokens;
 };
 
@@ -158,13 +158,13 @@ export const handleCallback = async (
   callbackUrl: string,
   config: OAuth2Config
 ): Promise<OAuth2Tokens> => {
-  debug(`Processing callback URL: ${callbackUrl}`);
+  debug("AUTH_FLOW", { step: "process_callback", url: callbackUrl });
   const url = new URL(callbackUrl);
   const code = url.searchParams.get("code");
 
   if (!code) {
     const errorMsg = "No authorization code found in callback URL";
-    logError(errorMsg);
+    logError("AUTH_ERROR", { error: errorMsg });
     throw new Error(errorMsg);
   }
 
@@ -240,7 +240,7 @@ const createCallbackServer = (
     try {
       // Only process requests to the callback path
       if (req.url?.startsWith(callbackPath)) {
-        debug(`Received callback: ${req.url}`);
+        debug("AUTH_FLOW", { step: "callback_received", url: req.url });
 
         // Extract code and error from URL
         const parsedUrl = new URL(`http://localhost${req.url}`);
@@ -255,7 +255,7 @@ const createCallbackServer = (
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logError("Error handling callback:", errorMsg);
+      logError("AUTH_ERROR", { error: errorMsg });
 
       const response = generateHtmlResponse(
         "Server Error",
@@ -277,17 +277,17 @@ export const launchBrowserAuthorization = async (
 ): Promise<OAuth2Tokens> => {
   const authUrl = getAuthorizationUrl(config);
 
-  debug(`Authorization URL: ${authUrl}`);
+  debug("AUTH_FLOW", { step: "authorization_url_generated", url: authUrl });
 
   setTimeout(() => {
-    info("Opening browser for TickTick authorization...");
+    info("AUTH_FLOW", { step: "open_browser" });
     open(authUrl);
   }, 200); // Wait for server to start
 
   // Start local server to listen for the callback
   const tokens = await startLocalServer(config, onTokensReceived);
 
-  info("Waiting for authorization to complete in your browser...");
+  info("AUTH_FLOW", { step: "wait_for_authorization" });
 
   return tokens;
 };
@@ -308,9 +308,11 @@ const startLocalServer = (
 
     let server: http.Server | null = null;
 
-    debug(
-      `Starting local server on port ${port} to listen for callback at ${callbackPath}`
-    );
+    debug("AUTH_FLOW", {
+      step: "start_server",
+      port,
+      callback_path: callbackPath,
+    });
 
     // Create server for handling OAuth callback
     server = createCallbackServer(
@@ -385,13 +387,13 @@ const startLocalServer = (
     // Handle server errors
     server.on("error", (err) => {
       const errorMsg = `Server error: ${err.message}`;
-      logError(errorMsg);
+      logError("AUTH_ERROR", { error: errorMsg });
       reject(new Error(errorMsg));
     });
 
     // Start listening
     server.listen(port, () => {
-      debug(`Server listening on port ${port}`);
+      debug("AUTH_FLOW", { step: "server_listening", port });
     });
   });
 };
@@ -401,7 +403,7 @@ const startLocalServer = (
  */
 const closeServer = (server: http.Server | null): void => {
   if (server) {
-    debug("Closing callback server");
+    debug("AUTH_FLOW", { step: "server_closing" });
     server.close();
   }
 };
