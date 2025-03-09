@@ -1,6 +1,6 @@
 import { useFocusManager } from "ink";
 import { useEffect } from "react";
-import { useAppStore } from "../store";
+import { useAppStore } from "../../store";
 
 /**
  * Hook for syncing the application store focus state with Ink's focus manager

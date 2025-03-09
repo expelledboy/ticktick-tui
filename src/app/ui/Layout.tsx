@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "ink";
 import { useTerminalDimensions } from "./useTerminalDimensions";
-import { useAppStore } from "../store";
+import { useAppStore } from "../../store";
 import { Projects } from "./Projects";
 import { Tasks } from "./Tasks";
 import { DebugPanel } from "./DebugPanel";

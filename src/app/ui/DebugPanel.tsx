@@ -1,5 +1,5 @@
 import { Box, Text } from "ink";
-import { useAppStore } from "../store";
+import { useAppStore } from "../../store";
 
 /**
  * Component to display debug information

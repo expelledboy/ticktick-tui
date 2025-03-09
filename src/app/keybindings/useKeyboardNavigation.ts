@@ -1,5 +1,5 @@
 import { useApp, useInput } from "ink";
-import { useAppStore } from "../store";
+import { useAppStore } from "../../store";
 import { arrow, binds, matchKeybinding, parseKeybinding } from "./utils";
 
 /**

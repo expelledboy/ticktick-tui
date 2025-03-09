@@ -2,7 +2,8 @@ import { create } from "zustand";
 import type { ProjectData, Task } from "../core/types";
 import type { Project } from "../core/types";
 import type { LogLevel } from "../core/logger";
-
+import { syncProjectData } from "./syncProjectData";
+import { getNear } from "./getNear";
 type AppView = "projects" | "tasks";
 
 // Updated log entry type with level
@@ -70,22 +71,6 @@ const initialState: AppState = {
   logs: [],
 };
 
-const getNear = (
-  direction: "next" | "previous",
-  array: any[],
-  currentId: string | null
-): string | null => {
-  if (!currentId) return null;
-  const index = array.findIndex((item) => item.id === currentId);
-  if (index === -1) return null;
-  const nextIndex = Math.max(
-    0,
-    Math.min(array.length - 1, index + (direction === "next" ? 1 : -1))
-  );
-  const nextItem = array[nextIndex];
-  return nextItem ? nextItem.id : null;
-};
-
 /* prettier-ignore */
 export const useAppStore = create<AppState & AppActions & AppNavigators & AppSetters>(
   (set, get) => ({
@@ -144,34 +129,3 @@ export const useAppStore = create<AppState & AppActions & AppNavigators & AppSet
     },
   })
 );
-
-const syncProjectData = (
-  currentProjects: Project[],
-  currentTasks: Task[],
-  projectData: ProjectData
-) => {
-  const id = projectData.project.id;
-
-  // Update the project with new data
-  const updatedProjects = currentProjects.map((project) => {
-    if (project.id === id) {
-      return projectData.project;
-    }
-    return project;
-  });
-
-  // If the project doesn't exist yet, add it
-  if (!updatedProjects.some((project) => project.id === id)) {
-    updatedProjects.push(projectData.project);
-  }
-
-  // Remove existing tasks for this project and add the new ones
-  const tasksFromOtherProjects = currentTasks.filter(
-    (task) => task.projectId !== id
-  );
-
-  // Combine tasks from other projects with the updated tasks for this project
-  const updatedTasks = [...tasksFromOtherProjects, ...projectData.tasks];
-
-  return { projects: updatedProjects, tasks: updatedTasks };
-};

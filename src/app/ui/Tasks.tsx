@@ -1,6 +1,6 @@
 import { Box, Text, useFocus } from "ink";
 import { useProjectData } from "../query";
-import { useAppStore } from "../store";
+import { useAppStore } from "../../store";
 import { type Task } from "../../core/types";
 import { useEffect } from "react";
 import { debug, info } from "../../core/logger";

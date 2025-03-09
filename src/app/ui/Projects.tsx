@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAppStore } from "../store";
+import { useAppStore } from "../../store";
 import { useProjects } from "../query";
 import { Box, Text, useFocus, useInput } from "ink";
 import { type Project } from "../../core/types";
