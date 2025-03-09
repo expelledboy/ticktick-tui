@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
 import { useAppStore } from "../store";
-import { config } from "../../config";
+import { config } from "../../core/config";
 
 /**
  * Component to display application logs

@@ -4,7 +4,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { App } from "./ui/App";
 import { storage } from "./state";
-import { logError } from "../logger";
+import { logError } from "../core/logger";
 
 // Create a client
 const queryClient = new QueryClient({

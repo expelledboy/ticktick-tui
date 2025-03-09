@@ -1,7 +1,7 @@
 // Import bootstrap file to fix React with Bun
 import { authenticate } from "./app/authenticate";
 import { runApp } from "./app/main";
-import { loadOAuthTokens } from "./auth";
+import { loadOAuthTokens } from "./core/auth";
 import { api } from "./ticktick/api";
 
 const main = async () => {

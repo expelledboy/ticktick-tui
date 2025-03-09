@@ -1,9 +1,9 @@
 import { Box, Text, useFocus } from "ink";
 import { useProjectData } from "../query";
 import { useAppStore } from "../store";
-import { type Task } from "../../types";
+import { type Task } from "../../core/types";
 import { useEffect } from "react";
-import { debug, info } from "../../logger";
+import { debug, info } from "../../core/logger";
 
 /**
  * Component to display tasks for a selected project

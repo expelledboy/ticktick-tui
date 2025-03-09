@@ -1,5 +1,5 @@
 import { mock } from "bun:test";
-import type { Project, ProjectData, Task } from "../types";
+import type { Project, ProjectData, Task } from "../core/types";
 
 /**
  * In-memory database for mocked TickTick API data

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useKeyboardNavigation, useStoreFocusManager } from "../keybindings";
-import { debug, info } from "../../logger";
+import { debug, info } from "../../core/logger";
 import { useAppStore } from "../store";
 import { Layout } from "./Layout";
 

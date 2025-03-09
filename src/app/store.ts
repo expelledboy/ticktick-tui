@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import type { ProjectData, Task } from "../types";
-import type { Project } from "../types";
-import type { LogLevel } from "../logger";
+import type { ProjectData, Task } from "../core/types";
+import type { Project } from "../core/types";
+import type { LogLevel } from "../core/logger";
 
 type AppView = "projects" | "tasks";
 

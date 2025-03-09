@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import { config } from "./config";
 import { dirname } from "node:path";
-import { useAppStore } from "./app/store"; // Import the store
+import { useAppStore } from "../app/store"; // Import the store
 
 const DEBUG = process.env.TICKTICK_DEBUG === "true";
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import * as schema from "./schema";
+import * as schema from "../ticktick/schema";
 import path from "node:path";
 
 /**

@@ -1,4 +1,4 @@
-import * as auth from "../auth";
+import * as auth from "../core/auth";
 import type { OAuth2Config } from "../utils/oauth2";
 
 export const authenticate = async () => {

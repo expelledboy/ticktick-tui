@@ -7,7 +7,7 @@
 import open from "open";
 import http from "http";
 import { URL } from "url";
-import { debug, info, logError } from "../logger";
+import { debug, info, logError } from "../core/logger";
 
 // Constants
 const TICKTICK_AUTH_URL = "https://ticktick.com/oauth/authorize";

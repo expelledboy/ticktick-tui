@@ -1,5 +1,5 @@
 import { type Key } from "ink";
-import { config } from "../../config";
+import { config } from "../../core/config";
 
 // Default empty key state
 export const emptyKey: Key = {

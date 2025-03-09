@@ -1,5 +1,5 @@
-import { debug, logError } from "../logger";
-import { config } from "../config";
+import { debug, logError } from "../core/logger";
+import { config } from "../core/config";
 
 // Rate limiting configuration
 const RATE_LIMIT = {

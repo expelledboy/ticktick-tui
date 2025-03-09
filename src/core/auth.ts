@@ -8,14 +8,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { debug, info, logError } from "./logger";
 import { config } from "./config";
-import type { OAuth2Tokens, OAuth2Config } from "./utils/oauth2";
+import type { OAuth2Tokens, OAuth2Config } from "../utils/oauth2";
 
 import {
   isTokenExpired,
   refreshAccessToken as refreshOAuthToken,
   launchBrowserAuthorization,
   handleCallback as handleOAuthCallback,
-} from "./utils/oauth2";
+} from "../utils/oauth2";
 
 /**
  * Get the path to the tokens storage file

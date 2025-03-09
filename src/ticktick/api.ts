@@ -1,4 +1,4 @@
-import type { Project, ProjectData, Task } from "../types";
+import type { Project, ProjectData, Task } from "../core/types";
 import { makeRequest } from "../utils/rest";
 
 /**
