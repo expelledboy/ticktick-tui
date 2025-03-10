@@ -5,7 +5,7 @@ const storagePath = config.storage.cache;
 
 if (!fs.existsSync(storagePath)) fs.writeFileSync(storagePath, "{}");
 
-export const storage = {
+export const localStorage = {
   getItem: (key: string) => {
     const data = fs.readFileSync(storagePath, "utf8");
     return JSON.parse(data)[key];

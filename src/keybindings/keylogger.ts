@@ -32,12 +32,12 @@ export const keylogger = (() => {
   // Return real implementation
   return {
     logKey: (key: Key, input: string) => {
-      const logLine = `KEY input: "${input}", key: {${formatKeyObject(key)}}\n`;
+      const logLine = `[⌨️] input "${formatInput(input)}" modifiers "${formatKeyObject(key)}"\n`;
       fs.appendFile(keyloggerFile, logLine, () => {});
     },
 
     logAction: (category: string, action: string, key: string) => {
-      const logLine = `ACTION category: "${category}", action: "${action}", key: "${key}"\n`;
+      const logLine = `[⚡] category:"${category}", action: "${action}", key: "${key}"\n`;
       fs.appendFile(keyloggerFile, logLine, () => {});
     },
 
@@ -47,16 +47,16 @@ export const keylogger = (() => {
       matched: boolean
     ) => {
       const logLine = [
-        "MATCH_ATTEMPT",
-        `checking: '${from.input}' (${formatKeyObject(from.key)})`,
-        `→ against: '${against.input}' (${formatKeyObject(against.key)})`,
-        `matched: ${matched}\n`,
+        `[${matched ? "✅" : "❌"}]`,
+        `matching "${formatInput(from.input)}" (${formatKeyObject(from.key)})`,
+        `against '${formatInput(against.input)}' (${formatKeyObject(against.key)})`,
+        `\n`,
       ].join(" ");
       fs.appendFile(keyloggerFile, logLine, () => {});
     },
 
     logDebug: (message: string, data?: any) => {
-      const logLine = `DEBUG message: ${message}, data: ${JSON.stringify(data)}\n`;
+      const logLine = `[🔍] ${message} data: ${JSON.stringify(data)}\n`;
       fs.appendFile(keyloggerFile, logLine, () => {});
     },
   };
@@ -67,4 +67,17 @@ export const formatKeyObject = (key: Key) => {
     .filter(([_, value]) => value)
     .map(([key, value]) => `${key}: ${value}`)
     .join(", ");
+};
+
+// Visualize special characters
+export const formatInput = (input: string) => {
+  if (input === "\r") return "\\r";
+  if (input === "\n") return "\\n";
+  if (input === "\t") return "\\t";
+  if (input === "\b") return "\\b";
+  if (input === "\f") return "\\f";
+  if (input === "\v") return "\\v";
+  if (input === "\0") return "\\0";
+
+  return input;
 };

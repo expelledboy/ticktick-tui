@@ -2,9 +2,9 @@ import { render } from "ink";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { App } from "./ui/App";
-import { storage } from "./state";
+import { App } from "./App";
 import { logError } from "../core/logger";
+import { localStorage } from "../utils/localStorage";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -27,7 +27,7 @@ export const runApp = async () => {
       client={queryClient}
       persistOptions={{
         persister: createSyncStoragePersister({
-          storage: storage,
+          storage: localStorage,
         }),
       }}
     >
@@ -50,12 +50,24 @@ export const runApp = async () => {
           error: "timeout_waiting_for_mutations",
           timeout_ms: timeout,
         });
+
+        // Give the user a chance to see the error message
+        await sleep(1000);
+
         break;
       }
-      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Wait for the next tick
+      await sleep(100);
     }
+
+    // TODO: Figure out why this doesn't work
+    // Clear the screen
+    app.clear();
 
     // Ensure process exits
     process.exit(0);
   });
 };
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
