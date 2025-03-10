@@ -103,14 +103,14 @@ const updateStoreLog = (level: LogLevel, message: string): void => {
  * Writes a log to file
  */
 const logToFile = (level: LogLevel, message: string): void => {
-  try {
-    const timestamp = new Date().toISOString();
-    const logLine = `${timestamp} ${level.padEnd(5)} ${message}\n`;
+  const timestamp = new Date().toISOString();
+  const logLine = `${timestamp} ${level.padEnd(5)} ${message}\n`;
 
-    fs.appendFileSync(getLogFile(), logLine);
-  } catch (error) {
-    console.error("Failed to write to log file", error);
-  }
+  fs.appendFile(getLogFile(), logLine, (error) => {
+    if (error) {
+      console.error("Failed to write to log file", error);
+    }
+  });
 };
 /**
  * Log a debug message - only to in app logs

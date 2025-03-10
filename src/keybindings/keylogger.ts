@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import { dirname } from "node:path";
 import { config } from "../core/config";
-import type { Key } from "./types";
+import type { Key } from "ink";
 
 const DEBUG = process.env.TICKTICK_DEBUG === "true";
 const keyloggerFile = config.storage.keylogger;
@@ -13,6 +13,8 @@ export const keylogger = (() => {
     return {
       logKey: () => {},
       logAction: () => {},
+      logDebug: () => {},
+      logKeybindingAttempt: () => {},
       clear: () => {},
     };
   }
@@ -30,44 +32,39 @@ export const keylogger = (() => {
   // Return real implementation
   return {
     logKey: (key: Key, input: string) => {
-      try {
-        fs.appendFileSync(
-          keyloggerFile,
-          JSON.stringify({
-            type: "key",
-            timestamp: new Date().toISOString(),
-            input,
-            key: { ...key },
-          }) + "\n"
-        );
-      } catch {
-        // Silently fail
-      }
+      const logLine = `KEY input: "${input}", key: {${formatKeyObject(key)}}\n`;
+      fs.appendFile(keyloggerFile, logLine, () => {});
     },
 
     logAction: (category: string, action: string, key: string) => {
-      try {
-        fs.appendFileSync(
-          keyloggerFile,
-          JSON.stringify({
-            type: "action",
-            timestamp: new Date().toISOString(),
-            category,
-            action,
-            key,
-          }) + "\n"
-        );
-      } catch {
-        // Silently fail
-      }
+      const logLine = `ACTION category: "${category}", action: "${action}", key: "${key}"\n`;
+      fs.appendFile(keyloggerFile, logLine, () => {});
     },
 
-    clear: () => {
-      try {
-        fs.writeFileSync(keyloggerFile, "");
-      } catch {
-        // Silently fail
-      }
+    logKeybindingAttempt: (
+      from: { input: string; key: Key },
+      against: { input: string; key: Key },
+      matched: boolean
+    ) => {
+      const logLine = [
+        "MATCH_ATTEMPT",
+        `checking: '${from.input}' (${formatKeyObject(from.key)})`,
+        `→ against: '${against.input}' (${formatKeyObject(against.key)})`,
+        `matched: ${matched}\n`,
+      ].join(" ");
+      fs.appendFile(keyloggerFile, logLine, () => {});
+    },
+
+    logDebug: (message: string, data?: any) => {
+      const logLine = `DEBUG message: ${message}, data: ${JSON.stringify(data)}\n`;
+      fs.appendFile(keyloggerFile, logLine, () => {});
     },
   };
 })();
+
+export const formatKeyObject = (key: Key) => {
+  return Object.entries(key)
+    .filter(([_, value]) => value)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(", ");
+};

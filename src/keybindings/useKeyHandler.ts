@@ -2,7 +2,8 @@ import { useInput } from "ink";
 import { useCallback, useMemo } from "react";
 import * as logger from "../core/logger";
 import type { KeyHandler, ActionHandler } from "./types";
-import { createKeyMap, matchKeybinding } from "./utils";
+import { createKeyMap } from "./utils";
+import { matchKeybinding } from "./keyMatchingLogic";
 import { keylogger } from "./keylogger";
 
 /**
@@ -16,7 +17,19 @@ export const useKeyHandler = (
   additionalHandler?: KeyHandler
 ) => {
   // Create a map of key to [category, action, parsed] triplets from config
-  const keyMap = useMemo(() => createKeyMap(), []);
+  const keyMap = useMemo(() => {
+    const keyMap = createKeyMap();
+
+    // Log available keybindings for debugging
+    keylogger.logDebug(
+      "available keybindings",
+      Array.from(keyMap.entries()).map(
+        ([key, [category, action]]) => `${category}.${action} (${key})`
+      )
+    );
+
+    return keyMap;
+  }, []);
 
   // Create the key handler function
   const handleInput = useCallback(
@@ -25,8 +38,16 @@ export const useKeyHandler = (
       keylogger.logKey(key, input);
 
       // Find matching keybinding
-      for (const [_, [category, action, parsed]] of keyMap.entries()) {
-        if (matchKeybinding(input, key, parsed)) {
+      for (const [configKey, [category, action, parsed]] of keyMap.entries()) {
+        const matches = matchKeybinding(input, key, parsed);
+        // Log attempt details
+        keylogger.logKeybindingAttempt(
+          { input, key },
+          { input: configKey, key: parsed.key },
+          matches
+        );
+
+        if (matches) {
           // Log the triggered action
           keylogger.logAction(category, action, parsed.configured || "");
 
@@ -41,6 +62,9 @@ export const useKeyHandler = (
           return;
         }
       }
+
+      // If we get here, no keybinding matched
+      keylogger.logDebug("No keybinding match found", { input, key });
 
       // Call additional handler if provided
       if (additionalHandler) {

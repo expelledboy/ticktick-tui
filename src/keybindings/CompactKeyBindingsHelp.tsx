@@ -1,7 +1,8 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { getAllKeybindings } from "./config";
-import { formatKeyBinding, parseKeybinding } from "./utils";
+import { formatKeyBinding } from "./utils";
+import { parseKeybinding } from "./keyMatchingLogic";
 
 interface CompactKeyBindingsHelpProps {
   context?: string; // Display only a specific context, or all if not specified

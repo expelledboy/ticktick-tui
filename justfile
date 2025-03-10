@@ -10,3 +10,9 @@ dev:
 
 typecheck:
     bun tsc --noEmit
+
+keylogger:
+    tail -f ~/.cache/ticktick-tui/keylogger.json
+
+logs:
+    tail -f ~/.cache/ticktick-tui/logs.log
