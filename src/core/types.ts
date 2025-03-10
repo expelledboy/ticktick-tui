@@ -1,6 +1,11 @@
 import { z } from "zod";
 import * as schema from "../ticktick/schema";
-import path from "node:path";
+
+/**
+ * Sort order for project view
+ */
+export const sortOrder = ["priority", "dueDate", "default"] as const;
+export type SortOrder = (typeof sortOrder)[number];
 
 /**
  * Type definitions for the TickTick API
@@ -82,6 +87,11 @@ export const AppSettingsSchema = z.object({
   // Services
   services: z.object({
     ticktickUri: z.string().url().default("https://api.ticktick.com/open/v1").describe("Base URI for TickTick API service"),
+  }).default({}),
+
+  // Views
+  views: z.object({
+    orderBy: z.enum(sortOrder).default("priority").describe("Default order by field for project view"),
   }).default({}),
 
   // Storage

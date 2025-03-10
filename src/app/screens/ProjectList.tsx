@@ -10,6 +10,7 @@ import FocusList, { type RenderItemProps } from "../../components/FocusList";
 import { useProjects } from "../../ticktick";
 import { useAppStore } from "../../store";
 import { type Project } from "../../core/types";
+import { ProjectSchema } from "../../ticktick/schema";
 
 export const ProjectList = () => {
   // Always call all hooks first, before any conditional logic
@@ -34,7 +35,7 @@ export const ProjectList = () => {
 
   // Sorts project by sortOrder property
   const sortedProjects = useMemo(() => {
-    return sortBySortOrder(projects ?? []);
+    return sortBySortOrder(projects ?? []).map((p) => ProjectSchema.parse(p));
   }, [projects]);
 
   // Handle project selection
@@ -51,13 +52,9 @@ export const ProjectList = () => {
   // Define renderItem function outside of FocusList props
   const renderProjectItem = useCallback(
     ({ item, isFocused, isSelected }: RenderItemProps<Project>) => {
-      let color = undefined;
-      if (isFocused && inFocus) color = "blue";
-      if (isSelected) color = "green";
-
       return (
         <Box>
-          <Text color={color}>
+          <Text color={isSelected ? "green" : undefined} bold={isFocused}>
             {isFocused ? "› " : "  "} {item.name}
           </Text>
         </Box>

@@ -163,16 +163,18 @@ function FocusList<T>({
   );
 
   // Register keyboard handler
-  useKeyHandler(handleAction, handleDefaultAction, mode);
+  useKeyHandler(mode, handleAction, handleDefaultAction);
 
   // Helper function to render the header
   const renderHeaderContent = useCallback(() => {
     if (renderHeader) return renderHeader();
     if (title)
       return (
-        <Text bold underline>
-          {title} ({items.length})
-        </Text>
+        <Box paddingLeft={1}>
+          <Text bold underline>
+            {title}
+          </Text>
+        </Box>
       );
     return null;
   }, [renderHeader, title, items.length]);
@@ -195,7 +197,7 @@ function FocusList<T>({
 
   // Render list with focused items
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" overflow="hidden">
       {renderHeaderContent()}
       <Box flexDirection="column" marginTop={1}>
         {items.map((item, index) => (

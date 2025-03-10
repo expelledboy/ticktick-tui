@@ -5,7 +5,7 @@ import { formatKeyBinding } from "./utils";
 import { parseKeybinding } from "./keyMatchingLogic";
 
 interface CompactKeyBindingsHelpProps {
-  context?: string; // Display only a specific context, or all if not specified
+  contexts?: string[]; // Display only a specific context, or all if not specified
 }
 
 // Formats action names from camelCase to a more readable format
@@ -40,6 +40,7 @@ function formatActionName(action: string): string {
     newProject: "new",
     deleteProject: "del",
     editProject: "edit",
+    toggleOrderBy: "order",
   };
 
   // Return the short name if available
@@ -122,13 +123,13 @@ function formatKeybindingPair(key: string, action: string): React.ReactNode {
 }
 
 const CompactKeyBindingsHelp: React.FC<CompactKeyBindingsHelpProps> = ({
-  context,
+  contexts,
 }) => {
   // Use useMemo to prevent recalculating keybindings on every render
   const allKeybindings = useMemo(() => getAllKeybindings(), []);
 
   // Get the contexts to display
-  const contextsToShow = context ? [context] : Object.keys(allKeybindings);
+  const contextsToShow = contexts ? contexts : Object.keys(allKeybindings);
 
   // Use useMemo for items to prevent recreating them on every render
   const items = useMemo(() => {

@@ -54,6 +54,7 @@ export const keybindingsSchema = z.object({
         deleteTask: { default: "d", description: "Delete a task" },
         editTaskTitle: { default: "i", description: "Edit task title" },
         editTaskProperties: { default: "e", description: "Edit task properties" },
+        toggleOrderBy: { default: "o", description: "Toggle order by" },
     }),
 
     ui: keyCategorySchema({

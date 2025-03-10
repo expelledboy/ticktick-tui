@@ -43,15 +43,15 @@ const Stories = () => {
       </Story>
 
       <Story title="Single Context - Global">
-        <CompactKeyBindingsHelp context="global" />
+        <CompactKeyBindingsHelp contexts={["global"]} />
       </Story>
 
       <Story title="Tasks">
-        <CompactKeyBindingsHelp context="tasks" />
+        <CompactKeyBindingsHelp contexts={["tasks"]} />
       </Story>
 
       <Story title="Projects">
-        <CompactKeyBindingsHelp context="projects" />
+        <CompactKeyBindingsHelp contexts={["projects"]} />
       </Story>
     </Box>
   );

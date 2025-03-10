@@ -18,10 +18,10 @@ export const ChecklistItemSchema = z.object({
   id: z.string().describe('Subtask identifier'),
   title: z.string().describe('Subtask title'),
   status: z.number().int().describe('The completion status of subtask - 0: Normal, 1: Completed'),
-  completedTime: z.string().datetime().optional().describe('Subtask completed time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
+  completedTime: z.coerce.date().optional().describe('Subtask completed time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
   isAllDay: z.boolean().optional().describe('Whether the subtask is scheduled for the entire day'),
   sortOrder: z.number().int().optional().describe('Subtask sort order position value'),
-  startDate: z.string().datetime().optional().describe('Subtask start date time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
+  startDate: z.coerce.date().optional().describe('Subtask start date time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
   timeZone: z.string().optional().describe('Subtask timezone, e.g., "America/Los_Angeles"'),
 });
 
@@ -35,14 +35,14 @@ export const TaskSchema = z.object({
   content: z.string().optional().describe('Task content/notes'),
   desc: z.string().optional().describe('Task description of checklist'), // Unclear distinction between content and desc
   isAllDay: z.boolean().optional().describe('Whether the task is scheduled for the entire day'),
-  completedTime: z.string().datetime().optional().describe('Task completed time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
-  dueDate: z.string().datetime().optional().describe('Task due date time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
+  completedTime: z.coerce.date().optional().describe('Task completed time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
+  dueDate: z.coerce.date().optional().describe('Task due date time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'), // 2025-03-11T22:00:00.000+0000 or Tue Mar 11 2025 01:21:22 GMT+0700 (Indochina Time)
   items: z.array(ChecklistItemSchema).optional().describe('Subtasks of Task'),
   priority: z.number().int().optional().describe('Task priority - 0: None, 1: Low, 3: Medium, 5: High'),
   reminders: z.array(z.string()).optional().describe('List of reminder triggers, e.g., ["TRIGGER:P0DT9H0M0S", "TRIGGER:PT0S"]'), // Format uses iCalendar DURATION values
   repeatFlag: z.string().optional().describe('Recurring rules of task in iCalendar format, e.g., "RRULE:FREQ=DAILY;INTERVAL=1"'),
   sortOrder: z.number().int().optional().describe('Task sort order position value'),
-  startDate: z.string().datetime().optional().describe('Start date time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
+  startDate: z.coerce.date().optional().describe('Start date time in "yyyy-MM-dd\'T\'HH:mm:ssZ" format'),
   status: z.number().int().optional().describe('Task completion status - 0: Normal, 2: Completed'),
   timeZone: z.string().optional().describe('Task timezone, e.g., "America/Los_Angeles"'),
 });

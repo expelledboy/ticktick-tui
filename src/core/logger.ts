@@ -59,7 +59,9 @@ export type LogOperation =
   | "KEYBINDING"
   | "KEYBINDING_TRIGGERED"
   | "CHANGE_FOCUS"
-  | "DEV";
+  | "DEV"
+  // Application errors
+  | "INVALID_DATA";
 
 /**
  * Format a log entry with key-value pairs

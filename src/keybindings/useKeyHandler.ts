@@ -13,9 +13,9 @@ import { useAppStore } from "../store";
  * @param mode - Determines which keybindings are active based on current view
  */
 export const useKeyHandler = (
+  mode: "global" | "projects" | "project" | "task" = "global",
   onAction: ActionHandler,
-  additionalHandler?: KeyHandler,
-  mode: "global" | "projects" | "project" | "task" = "global"
+  additionalHandler?: KeyHandler
 ) => {
   // Get the active view
   const activeView = useAppStore((s) => s.activeView);
