@@ -3,15 +3,26 @@ import { config } from "./config";
 import { dirname } from "node:path";
 import { useAppStore } from "../store"; // Import the store
 
-// Expand the path to replace ~ with the user's home directory
-const logFile = config.storage.logs;
-const logDir = dirname(logFile);
+// Cache for the log file path and directory
+let logFileCache: string | null = null;
+let logDirCache: string | null = null;
 
-// Setup log file
-if (!fs.existsSync(logDir)) {
-  console.log("Creating log directory", logDir);
-  fs.mkdirSync(logDir, { recursive: true });
-}
+// Function to lazily initialize and get the log file path
+// Prevents circular dependency with config
+const getLogFile = (): string => {
+  if (!logFileCache) {
+    // Only access config when this function is called
+    logFileCache = config.storage.logs;
+    logDirCache = dirname(logFileCache);
+
+    // Setup log file
+    if (!fs.existsSync(logDirCache)) {
+      console.log("Creating log directory", logDirCache);
+      fs.mkdirSync(logDirCache, { recursive: true });
+    }
+  }
+  return logFileCache;
+};
 
 // Type for log levels, must match the type in store.ts
 export type LogLevel = "INFO" | "DEBUG" | "ERROR";
@@ -96,7 +107,7 @@ const logToFile = (level: LogLevel, message: string): void => {
     const timestamp = new Date().toISOString();
     const logLine = `${timestamp} ${level.padEnd(5)} ${message}\n`;
 
-    fs.appendFileSync(logFile, logLine);
+    fs.appendFileSync(getLogFile(), logLine);
   } catch (error) {
     console.error("Failed to write to log file", error);
   }

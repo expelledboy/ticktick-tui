@@ -79,30 +79,6 @@ export const AppSettingsSchema = z.object({
     maxRetries: z.number().int().nonnegative().default(3).describe("Maximum number of sync retry attempts"),
   }).default({}),
 
-  // Keybindings
-  keybindings: z.object({
-    // Task navigation
-    navUp: z.string().default("k").describe("Navigate up"),
-    navDown: z.string().default("j").describe("Navigate down"),
-    navLeft: z.string().default("h").describe("Navigate left"),
-    navRight: z.string().default("l").describe("Navigate right"),
-    // UI control
-    toggleSidebar: z.string().default("ctrl+p").describe("Shortcut for toggling the projects sidebar"),
-    toggleDebug: z.string().default("ctrl+d").describe("Toggle debug panel"),
-    toggleLogs: z.string().default("ctrl+l").describe("Toggle logs panel"),
-    exitProgram: z.string().default("q").describe("Exit the program"),
-    // Task actions
-    addTask: z.string().default("a").describe("Add a new task"),
-    completeTask: z.string().default("c").describe("Mark current task as complete"),
-    moveTaskDown: z.string().default("ctrl+j").describe("Move task down in the list"),
-    moveTaskUp: z.string().default("ctrl+k").describe("Move task up in the list"),
-    editTaskTitle: z.string().default("i").describe("Edit the task title"),
-    editTaskProperties: z.string().default("e").describe("Edit task other properties"),
-    // Search
-    search: z.string().default("/").describe("Start search"),
-    toggleGlobalSearch: z.string().default("ctrl+g").describe("Toggle global search"),
-  }).default({}),
-
   // Services
   services: z.object({
     ticktickUri: z.string().url().default("https://api.ticktick.com/open/v1").describe("Base URI for TickTick API service"),
@@ -111,9 +87,11 @@ export const AppSettingsSchema = z.object({
   // Storage
   storage: z.object({
     config: z.string().default("~/.config/ticktick-tui/config.json").describe("Path to the configuration file"),
+    keybindings: z.string().default("~/.config/ticktick-tui/keybindings.json").describe("Path to the keybindings file"),
     credentials: z.string().default("~/.config/ticktick-tui/credentials.json").describe("Path to the credentials file"),
     logs: z.string().default("~/.cache/ticktick-tui/logs.log").describe("Path to the logs file"),
     cache: z.string().default("~/.cache/ticktick-tui/cache.json").describe("Path to the cache file"),
+    keylogger: z.string().default("~/.cache/ticktick-tui/keylogger.json").describe("Path to the keylogger file"),
   })
     .default({})
     .transform(transformPaths),
