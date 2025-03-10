@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, render } from "ink";
-import { CompactKeyBindingsHelp } from "./CompactKeyBindingsHelp";
+import CompactKeyBindingsHelp from "./CompactKeyBindingsHelp";
 
 /**
  * CompactKeyBindingsHelp Stories

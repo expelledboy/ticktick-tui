@@ -31,22 +31,29 @@ export const keylogger = (() => {
 
   // Return real implementation
   return {
-    logKey: (key: Key, input: string) => {
-      const logLine = `[⌨️] input "${formatInput(input)}" modifiers "${formatKeyObject(key)}"\n`;
+    logKey: (mode: string, key: Key, input: string) => {
+      const logLine = `${mode} [⌨️] input "${formatInput(input)}" modifiers "${formatKeyObject(key)}"\n`;
       fs.appendFile(keyloggerFile, logLine, () => {});
     },
 
-    logAction: (category: string, action: string, key: string) => {
-      const logLine = `[⚡] category:"${category}", action: "${action}", key: "${key}"\n`;
+    logAction: (
+      mode: string,
+      category: string,
+      action: string,
+      key: string
+    ) => {
+      const logLine = `${mode} [⚡] category:"${category}", action: "${action}", key: "${key}"\n`;
       fs.appendFile(keyloggerFile, logLine, () => {});
     },
 
     logKeybindingAttempt: (
+      mode: string,
       from: { input: string; key: Key },
       against: { input: string; key: Key },
       matched: boolean
     ) => {
       const logLine = [
+        `${mode}`,
         `[${matched ? "✅" : "❌"}]`,
         `matching "${formatInput(from.input)}" (${formatKeyObject(from.key)})`,
         `against '${formatInput(against.input)}' (${formatKeyObject(against.key)})`,
@@ -55,8 +62,8 @@ export const keylogger = (() => {
       fs.appendFile(keyloggerFile, logLine, () => {});
     },
 
-    logDebug: (message: string, data?: any) => {
-      const logLine = `[🔍] ${message} data: ${JSON.stringify(data)}\n`;
+    logDebug: (mode: string, message: string, data?: any) => {
+      const logLine = `${mode} [🔍] ${message} data: ${JSON.stringify(data)}\n`;
       fs.appendFile(keyloggerFile, logLine, () => {});
     },
   };

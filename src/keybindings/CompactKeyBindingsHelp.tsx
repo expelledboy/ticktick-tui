@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useMemo } from "react";
 import { Box, Text } from "ink";
 import { getAllKeybindings } from "./config";
 import { formatKeyBinding } from "./utils";
@@ -121,37 +121,42 @@ function formatKeybindingPair(key: string, action: string): React.ReactNode {
   );
 }
 
-export const CompactKeyBindingsHelp: React.FC<CompactKeyBindingsHelpProps> = ({
+const CompactKeyBindingsHelp: React.FC<CompactKeyBindingsHelpProps> = ({
   context,
 }) => {
-  const allKeybindings = getAllKeybindings();
+  // Use useMemo to prevent recalculating keybindings on every render
+  const allKeybindings = useMemo(() => getAllKeybindings(), []);
 
   // Get the contexts to display
   const contextsToShow = context ? [context] : Object.keys(allKeybindings);
 
-  // Items to display
-  const items: React.ReactNode[] = [];
+  // Use useMemo for items to prevent recreating them on every render
+  const items = useMemo(() => {
+    const itemsArray: React.ReactNode[] = [];
 
-  // Process each context
-  contextsToShow.forEach((category, categoryIndex) => {
-    const bindings = allKeybindings[category as keyof typeof allKeybindings];
-    if (!bindings || Object.keys(bindings).length === 0) return;
+    // Process each context
+    contextsToShow.forEach((category, categoryIndex) => {
+      const bindings = allKeybindings[category as keyof typeof allKeybindings];
+      if (!bindings || Object.keys(bindings).length === 0) return;
 
-    // Process each keybinding
-    Object.entries(bindings).forEach(([action, key], keyIndex) => {
-      // Add spacing between keys
-      if (items.length > 0) {
-        items.push(<Text key={`${category}-${action}-space`}> </Text>);
-      }
+      // Process each keybinding
+      Object.entries(bindings).forEach(([action, key], keyIndex) => {
+        // Add spacing between keys
+        if (itemsArray.length > 0) {
+          itemsArray.push(<Text key={`${category}-${action}-space`}> </Text>);
+        }
 
-      // Format this keybinding pair
-      items.push(
-        <Box key={`${category}-${action}`}>
-          {formatKeybindingPair(key, action)}
-        </Box>
-      );
+        // Format this keybinding pair
+        itemsArray.push(
+          <Box key={`${category}-${action}`}>
+            {formatKeybindingPair(key, action)}
+          </Box>
+        );
+      });
     });
-  });
+
+    return itemsArray;
+  }, [allKeybindings, contextsToShow]);
 
   return (
     <Box flexDirection="row" flexWrap="wrap">
@@ -159,3 +164,5 @@ export const CompactKeyBindingsHelp: React.FC<CompactKeyBindingsHelpProps> = ({
     </Box>
   );
 };
+
+export default memo(CompactKeyBindingsHelp);

@@ -49,3 +49,5 @@ export const LogsPanel = () => {
     </Box>
   );
 };
+
+export default LogsPanel;

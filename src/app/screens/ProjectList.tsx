@@ -4,92 +4,99 @@
  * Displays a list of projects using the FocusList component
  * Fetches data from the API and manages project selection
  */
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Text } from "ink";
-import FocusList from "../../components/FocusList";
-import { useRemoteProjects } from "../query";
+import FocusList, { type RenderItemProps } from "../../components/FocusList";
+import { useProjects } from "../../ticktick";
 import { useAppStore } from "../../store";
 import { type Project } from "../../core/types";
 
 export const ProjectList = () => {
-  // Fetch projects data
-  const { data, isLoading, error } = useRemoteProjects();
+  // Always call all hooks first, before any conditional logic
+  const inFocus = useAppStore((s) => s.activeView === "projects");
 
-  // Access store with minimal selectors
+  // Fetch projects data
+  const { data: projects, isLoading, error } = useProjects();
+
+  // Manage selected project
+  const selectedProjectId = useAppStore((s) => s.selectedProjectId);
+  const setSelectedProjectId = useAppStore((s) => s.setSelectedProjectId);
+
+  // Update projects in store
   const updateProjects = useAppStore((s) => s.updateProjects);
-  const activate = useAppStore((s) => s.activate);
   const setActiveView = useAppStore((s) => s.setActiveView);
 
-  // Use primitive selectors to avoid unnecessary re-renders
-  const activeProjectId = useAppStore((s) => s.active.projects);
-  const projectsData = useAppStore((s) => s.projects);
-
-  // Memoize the projects array to prevent re-renders
-  const projects = useMemo(() => {
-    return projectsData.map((p) => p.project);
-  }, [projectsData]);
-
-  // Update the store when data is fetched (only once per data change)
   useEffect(() => {
-    if (data) {
-      // Update store with project data
-      updateProjects(data);
-
-      // Set active view to projects on initial load if we have data and no active project
-      if (data.length > 0 && !activeProjectId) {
-        setActiveView("projects");
-      }
+    if (projects) {
+      updateProjects(projects);
     }
-  }, [data, updateProjects, setActiveView, activeProjectId]);
+  }, [projects, updateProjects]);
+
+  // Sorts project by sortOrder property
+  const sortedProjects = useMemo(() => {
+    return sortBySortOrder(projects ?? []);
+  }, [projects]);
 
   // Handle project selection
   const handleSelectProject = useCallback(
     (project: Project | null) => {
       if (!project) return;
 
-      // Set the active project and move to tasks view
-      activate();
+      setSelectedProjectId(project.id);
+      setActiveView("project");
     },
-    [activate]
+    [setSelectedProjectId, setActiveView]
   );
 
-  // Render loading state
-  if (isLoading) {
-    return (
-      <Box>
-        <Text>Loading projects...</Text>
-      </Box>
-    );
-  }
+  // Define renderItem function outside of FocusList props
+  const renderProjectItem = useCallback(
+    ({ item, isFocused, isSelected }: RenderItemProps<Project>) => {
+      let color = undefined;
+      if (isFocused && inFocus) color = "blue";
+      if (isSelected) color = "green";
 
-  // Render error state
-  if (error) {
-    return (
-      <Box>
-        <Text color="red">Error: {error.message}</Text>
-      </Box>
-    );
-  }
-
-  // Render the projects list
-  return (
-    <FocusList
-      items={projects}
-      selectedId={activeProjectId}
-      onSelect={handleSelectProject}
-      title="Projects"
-      getItemId={(project) => project.id}
-      renderItem={({ item: project, isFocused, isSelected }) => (
+      return (
         <Box>
-          <Text color={isSelected ? "green" : isFocused ? "blue" : undefined}>
-            {isFocused ? "› " : "  "}
-            {project.name}
+          <Text color={color}>
+            {isFocused ? "› " : "  "} {item.name}
           </Text>
         </Box>
+      );
+    },
+    [inFocus]
+  );
+
+  // Use a single return with conditional rendering instead of early returns
+  return (
+    <Box>
+      {isLoading ? (
+        // Render loading state
+        <Text>Loading projects...</Text>
+      ) : error ? (
+        // Render error state
+        <Text color="red">Error: {error.message}</Text>
+      ) : (
+        // Render the projects list
+        <FocusList<Project>
+          mode="projects"
+          title="Projects"
+          items={sortedProjects}
+          selectedId={selectedProjectId}
+          onSelect={handleSelectProject}
+          emptyMessage="No projects found"
+          getItemId={(project) => project.id}
+          renderItem={renderProjectItem}
+        />
       )}
-      emptyMessage="No projects found"
-    />
+    </Box>
   );
 };
 
 export default ProjectList;
+
+/**
+ * Helper function to sort projects by their sortOrder property
+ */
+function sortBySortOrder(projects: Project[]) {
+  return projects.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+}

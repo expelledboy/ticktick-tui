@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, render } from "ink";
-import { KeyBindingsHelp } from "./KeyBindingsHelp";
+import KeyBindingsHelp from "./KeyBindingsHelp";
 
 /**
  * KeyBindingsHelp Stories

@@ -48,7 +48,7 @@ export const keybindingsSchema = z.object({
         editProject: { default: "e", description: "Edit a project" },
     }),
 
-    tasks: keyCategorySchema({
+    project: keyCategorySchema({
         newTask: { default: "n", description: "Create a new task" },
         completeTask: { default: "c", description: "Mark a task as complete" },
         deleteTask: { default: "d", description: "Delete a task" },

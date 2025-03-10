@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import { Box } from "ink";
 import { useTerminalDimensions } from "../../hooks/useTerminalDimensions";
 import { useAppStore } from "../../store";
@@ -10,12 +10,12 @@ import { useAppStore } from "../../store";
  */
 export const Layout: React.FC<{
   Projects: React.ReactNode;
-  Tasks: React.ReactNode;
+  Project: React.ReactNode;
   Debug: React.ReactNode;
   Logs: React.ReactNode;
   StatusBar: React.ReactNode;
   Help: React.ReactNode;
-}> = memo(({ Projects, Tasks, Debug, Logs, StatusBar, Help }) => {
+}> = memo(({ Projects, Project, Debug, Logs, StatusBar, Help }) => {
   // Get terminal dimensions
   const { width, height: heightReal } = useTerminalDimensions();
 
@@ -57,17 +57,17 @@ export const Layout: React.FC<{
           </Box>
         )}
 
-        {/* Tasks Panel - Takes remaining width */}
+        {/* Project Panel - Takes remaining width */}
         <Box
           borderStyle="round"
           borderColor="green"
           flexGrow={1}
           flexShrink={1}
         >
-          {Tasks}
+          {Project}
         </Box>
 
-        {/* Help Panel - Alongside Tasks */}
+        {/* Help Panel - Alongside Project */}
         {viewHelp && (
           <Box
             borderStyle="round"
@@ -79,7 +79,7 @@ export const Layout: React.FC<{
           </Box>
         )}
 
-        {/* Debug Panel - Alongside Tasks */}
+        {/* Debug Panel - Alongside Project */}
         {debugMode && (
           <Box
             borderStyle="round"

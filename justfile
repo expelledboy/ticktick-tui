@@ -16,3 +16,6 @@ keylogger:
 
 logs:
     tail -f ~/.cache/ticktick-tui/logs.log
+
+reset-cache:
+    rm -rf ~/.cache/ticktick-tui/cache.json

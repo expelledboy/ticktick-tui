@@ -8,6 +8,12 @@ import { useEffect, useState, useCallback, useRef, memo } from "react";
 import { Box, Text, type Key } from "ink";
 import { useKeyHandler } from "../keybindings";
 
+export interface RenderItemProps<T> {
+  item: T;
+  isFocused: boolean;
+  isSelected?: boolean;
+}
+
 export interface FocusListProps<T> {
   // Core data and callbacks
   items: T[]; // The list of items to display
@@ -16,18 +22,16 @@ export interface FocusListProps<T> {
   getItemId?: (item: T) => string; // Function to get unique ID from item
 
   // Custom rendering
-  renderItem: (props: {
-    // Custom render function for each item
-    item: T;
-    isFocused: boolean;
-    isSelected?: boolean;
-  }) => React.ReactNode;
+  renderItem: (props: RenderItemProps<T>) => React.ReactNode;
   renderHeader?: () => React.ReactNode; // Custom header renderer
   renderEmpty?: () => React.ReactNode; // Custom empty state renderer
 
   // Customization
   title?: string; // Optional list title
   emptyMessage?: string; // Message to show when list is empty
+
+  // Mode
+  mode?: "global" | "projects" | "project" | "task";
 }
 
 // Utility function for comparing arrays
@@ -86,7 +90,9 @@ function useFocusManagement<T>(
     }
 
     // Otherwise focus the first item only on initial mount or when data actually changes
-    setFocusedIndex(0);
+    if (firstMount.current || itemsChanged) {
+      setFocusedIndex(0);
+    }
   }, [items, selectedId, getItemId]);
 
   // Navigation functions - memoized
@@ -119,6 +125,7 @@ function FocusList<T>({
   renderEmpty,
   title,
   emptyMessage = "No items found",
+  mode = "global",
 }: FocusListProps<T>) {
   // Use the custom hook for focus management
   const { focusedIndex, navigate } = useFocusManagement(
@@ -156,7 +163,7 @@ function FocusList<T>({
   );
 
   // Register keyboard handler
-  useKeyHandler(handleAction, handleDefaultAction);
+  useKeyHandler(handleAction, handleDefaultAction, mode);
 
   // Helper function to render the header
   const renderHeaderContent = useCallback(() => {

@@ -59,7 +59,7 @@ export type LogOperation =
   | "KEYBINDING"
   | "KEYBINDING_TRIGGERED"
   | "CHANGE_FOCUS"
-  | "DEBUG";
+  | "DEV";
 
 /**
  * Format a log entry with key-value pairs
@@ -86,8 +86,8 @@ const formatLogData = (
 };
 
 // Dev only logs
-export const __DEBUG = (msg: string, data?: Record<string, any>): void => {
-  const message = formatLogData("DEBUG", { msg, data: JSON.stringify(data) });
+export const __DEV = (msg: string, data?: Record<string, any>): void => {
+  const message = formatLogData("DEV", { msg, data: JSON.stringify(data) });
   updateStoreLog("DEBUG", message);
 };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { Box, Text } from "ink";
 import { getAllKeybindings } from "./config";
 import { formatKeyBinding } from "./utils";
@@ -9,7 +9,7 @@ interface KeyBindingsHelpProps {
   context?: string;
 }
 
-export const KeyBindingsHelp: React.FC<KeyBindingsHelpProps> = ({
+const KeyBindingsHelp: React.FC<KeyBindingsHelpProps> = ({
   contextual = false,
   context = "global",
 }) => {
@@ -51,3 +51,5 @@ export const KeyBindingsHelp: React.FC<KeyBindingsHelpProps> = ({
     </Box>
   );
 };
+
+export default memo(KeyBindingsHelp);

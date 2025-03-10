@@ -1,3 +1,3 @@
 export { useKeyHandler } from "./useKeyHandler";
-export { KeyBindingsHelp } from "./KeyBindingsHelp";
-export { CompactKeyBindingsHelp } from "./CompactKeyBindingsHelp";
+export { default as KeyBindingsHelp } from "./KeyBindingsHelp";
+export { default as CompactKeyBindingsHelp } from "./CompactKeyBindingsHelp";
