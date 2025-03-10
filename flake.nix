@@ -30,6 +30,12 @@
         packages = {
           default = defaultPackage;
         };
+
+        apps = {
+          default = flake-utils.lib.mkApp {
+            drv = defaultPackage;
+          };
+        };
       }
     );
 }
