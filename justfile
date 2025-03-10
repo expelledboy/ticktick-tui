@@ -19,3 +19,9 @@ logs:
 
 reset-cache:
     rm -rf ~/.cache/ticktick-tui/cache.json
+
+bun2nix:
+    bun2nix -o bun.nix
+
+build: bun2nix
+    nix build
