@@ -4,6 +4,7 @@ import * as logger from "../core/logger";
 import { createKeyMap } from "./utils";
 import { matchKeybinding } from "./keyMatchingLogic";
 import { keylogger } from "./keylogger";
+import { type ViewMode } from "../core/types";
 
 /**
  * Hook to log keyboard input and keybinding matches
@@ -11,9 +12,7 @@ import { keylogger } from "./keylogger";
  *
  * @param mode The mode this logger is being used in (global, projects, project, task)
  */
-export const useKeyLogger = (
-  mode: "global" | "projects" | "project" | "task" = "global"
-) => {
+export const useKeyLogger = (mode: ViewMode) => {
   // Create a map of key to [category, action, parsed] triplets from config
   const keyMap = useMemo(() => {
     const keyMap = createKeyMap();

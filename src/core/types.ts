@@ -35,14 +35,16 @@ export type OAuth2Tokens = {
 };
 
 /**
- * Sync status
+ * View modes
+ *
+ * These are tightly coupled with the keybindings
  */
-
-export type SyncStatus = {
-  isSyncing: boolean;
-  lastSyncTime: Date | null;
-  error: string | null;
-};
+export type ViewMode =
+  | "projectList" // Viewing projects list
+  | "project" // Viewing tasks in a project
+  | "task" // Viewing a task
+  | "form" // Editing a task or project
+  | "dialog"; // Popup dialogs
 
 /**
  * Transforms paths to be absolute, replacing ~ with the HOME directory

@@ -4,6 +4,9 @@ import type { KeyHandler, ActionHandler } from "./types";
 import { createKeyMap } from "./utils";
 import { matchKeybinding } from "./keyMatchingLogic";
 import { useAppStore } from "../store";
+import type { ViewMode } from "../core/types";
+
+export type AppMode = "global" | ViewMode;
 
 /**
  * Hook to handle keyboard input using the global keybinding configuration
@@ -13,7 +16,7 @@ import { useAppStore } from "../store";
  * @param mode - Determines which keybindings are active based on current view
  */
 export const useKeyHandler = (
-  mode: "global" | "projects" | "project" | "task" = "global",
+  mode: AppMode,
   onAction: ActionHandler,
   additionalHandler?: KeyHandler
 ) => {

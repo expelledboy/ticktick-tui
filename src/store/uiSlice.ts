@@ -1,6 +1,5 @@
 import type { StateCreator } from "zustand";
-
-type AppView = "projects" | "project" | "task";
+import { type ViewMode } from "../core/types";
 
 type UIState = {
   // Viewing
@@ -10,7 +9,7 @@ type UIState = {
   viewLogs: boolean;
   viewHelp: boolean;
   // Navigation
-  activeView: AppView;
+  activeView: ViewMode;
   focusedId: string | null;
   // Error
   error: string | null;
@@ -24,7 +23,7 @@ type UIActions = {
   toggleViewLogs: () => void;
   toggleViewHelp: () => void;
   // Navigation
-  setActiveView: (view: AppView) => void;
+  setActiveView: (view: ViewMode) => void;
   setFocusedId: (id: string | null) => void;
   // Error
   setError: (error: string | null) => void;
@@ -47,9 +46,9 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   toggleViewHelp: () => set((s) => ({ viewHelp: !s.viewHelp })),
 
   // Navigation
-  activeView: "projects",
+  activeView: "projectList",
   focusedId: null,
-  setActiveView: (view: AppView) => set((s) => ({ activeView: view })),
+  setActiveView: (view: ViewMode) => set((s) => ({ activeView: view })),
   setFocusedId: (id: string | null) => set((s) => ({ focusedId: id })),
 
   // Error

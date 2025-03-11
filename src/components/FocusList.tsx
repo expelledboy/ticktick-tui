@@ -7,6 +7,7 @@
 import { useEffect, useState, useCallback, useRef, memo } from "react";
 import { Box, Text, type Key } from "ink";
 import { useKeyHandler } from "../keybindings";
+import type { AppMode } from "../keybindings/useKeyHandler";
 
 export interface RenderItemProps<T> {
   item: T;
@@ -31,7 +32,7 @@ export interface FocusListProps<T> {
   emptyMessage?: string; // Message to show when list is empty
 
   // Mode
-  mode?: "global" | "projects" | "project" | "task";
+  mode?: AppMode;
 }
 
 // Utility function for comparing arrays

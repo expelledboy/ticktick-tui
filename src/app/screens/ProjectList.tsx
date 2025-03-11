@@ -14,7 +14,7 @@ import { ProjectSchema } from "../../ticktick/schema";
 
 export const ProjectList = () => {
   // Always call all hooks first, before any conditional logic
-  const inFocus = useAppStore((s) => s.activeView === "projects");
+  const inFocus = useAppStore((s) => s.activeView === "projectList");
 
   // Fetch projects data
   const { data: projects, isLoading, error } = useProjects();
@@ -75,7 +75,7 @@ export const ProjectList = () => {
       ) : (
         // Render the projects list
         <FocusList<Project>
-          mode="projects"
+          mode="projectList"
           title="Projects"
           items={sortedProjects}
           selectedId={selectedProjectId}

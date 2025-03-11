@@ -4,7 +4,6 @@ import { useKeyHandler } from "../keybindings/useKeyHandler";
 import { useCallback } from "react";
 import { useAppStore } from "../store";
 import { CompactKeyBindingsHelp, KeyBindingsHelp } from "../keybindings";
-import { __DEV } from "../core/logger";
 
 // Screens
 import ProjectList from "./screens/ProjectList";
@@ -57,12 +56,12 @@ export const App = () => {
       if (actionCategory === "navigation") {
         switch (action) {
           case "right":
-            if (activeView === "projects") setActiveView("project");
+            if (activeView === "projectList") setActiveView("project");
             if (activeView === "project") setActiveView("task");
             break;
           case "left":
             if (activeView === "task") setActiveView("project");
-            if (activeView === "project") setActiveView("projects");
+            if (activeView === "project") setActiveView("projectList");
             break;
         }
       }
@@ -70,13 +69,14 @@ export const App = () => {
     [activeView, setActiveView]
   );
 
+  // prettier-ignore
   const handleNativeKeys = useCallback(
     (input: string, key: Key) => {
       if (input === "?") toggleViewHelp();
-      if (key.rightArrow && activeView === "projects") setActiveView("project");
+      if (key.rightArrow && activeView === "projectList") setActiveView("project");
       if (key.rightArrow && activeView === "project") setActiveView("task");
       if (key.leftArrow && activeView === "task") setActiveView("project");
-      if (key.leftArrow && activeView === "project") setActiveView("projects");
+      if (key.leftArrow && activeView === "project") setActiveView("projectList");
     },
     [activeView, toggleViewHelp, setActiveView]
   );
