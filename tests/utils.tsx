@@ -148,7 +148,7 @@ export async function waitForCondition(
 /**
  * Simulate key presses in the terminal
  */
-export const press = (
+export const press = async (
   stdin: { write: (input: string) => void },
   key: string
 ) => {
@@ -175,11 +175,9 @@ export const press = (
     ctrl_s: "\u0013",
   };
 
-  if (key in keyMap) {
-    stdin.write(keyMap[key]);
-  } else {
-    stdin.write(key);
-  }
+  stdin.write(keyMap[key]);
+  // Add small delay to allow render cycle to start
+  await new Promise((resolve) => setTimeout(resolve, 3));
 };
 
 /**

@@ -57,6 +57,7 @@ function useFocusManagement<T>(
   const firstMount = useRef(true);
   const previousItems = useRef(items);
   const previousSelectedId = useRef(selectedId);
+  const [renderCount, setRenderCount] = useState(0);
 
   // Reset focused index when items or selection changes
   useEffect(() => {
@@ -110,6 +111,9 @@ function useFocusManagement<T>(
           setFocusedIndex((prev) => (prev + 1) % items.length);
           break;
       }
+
+      // Force a re-render
+      setRenderCount((c) => (c + 1) % 1000);
     },
     [items.length]
   );

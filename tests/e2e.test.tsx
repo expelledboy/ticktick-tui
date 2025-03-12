@@ -69,7 +69,7 @@ describe("Project and Task Management E2E", () => {
       .does(
         "navigates to project 2",
         (async () => {
-          app.press("down");
+          await app.press("down");
           // Wait for UI to update - this is simple and effective
           await app.waitForText("›  Project 2");
         })()
@@ -83,7 +83,7 @@ describe("Project and Task Management E2E", () => {
       .does(
         "navigate back to project 1",
         (async () => {
-          app.press("up");
+          await app.press("up");
           // Wait for UI to update
           await app.waitForText("›  Project 1");
         })()
@@ -99,7 +99,7 @@ describe("Project and Task Management E2E", () => {
       .does(
         "selects project 1",
         (async () => {
-          app.press("enter");
+          await app.press("enter");
 
           // Wait for both data to load and UI to update
           await app.waitForQueryStatus(
@@ -125,7 +125,7 @@ describe("Project and Task Management E2E", () => {
       .does(
         "scrolls through tasks",
         (async () => {
-          app.press("down");
+          await app.press("down");
           // Wait for UI to update to show the focused task
           await app.waitForText("›  Task 2");
         })()

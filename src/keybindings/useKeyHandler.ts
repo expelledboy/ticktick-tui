@@ -1,5 +1,5 @@
 import { useInput, type Key } from "ink";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useAppStore } from "../store";
 import { type ViewMode } from "../core/types";
 import {
@@ -41,6 +41,25 @@ export function isNavigationAction(key: Key) {
 const cachedBindings = configToBindings(getAllKeybindings() as any);
 
 /**
+ * Simple debounce function to prevent multiple rapid keypresses
+ */
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  return function (...args: Parameters<T>) {
+    if (timeout) {
+      return;
+    }
+
+    func(...args);
+
+    timeout = setTimeout(() => {
+      timeout = null;
+    }, wait);
+  };
+}
+
+/**
  * Unified key handler with explicit mode handling and priority-based binding resolution
  *
  * @param mode The current app mode (global, projects, project, task)
@@ -48,6 +67,12 @@ const cachedBindings = configToBindings(getAllKeybindings() as any);
  */
 export const useKeyHandler = (mode: AppMode, onAction: ActionHandler) => {
   const activeView = useAppStore((s) => s.activeView);
+  // Create a ref to track the last input time
+  const lastActionRef = useRef<{
+    category: string;
+    action: string;
+    time: number;
+  } | null>(null);
 
   const handleInput = useCallback(
     (input: string, key: Key) => {
@@ -60,6 +85,24 @@ export const useKeyHandler = (mode: AppMode, onAction: ActionHandler) => {
       // Handle direct navigation keys first (for backward compatibility)
       const navigationAction = isNavigationAction(key);
       if (navigationAction) {
+        // Prevent duplicate rapid keypresses (especially important for navigation)
+        const now = Date.now();
+        if (
+          lastActionRef.current &&
+          lastActionRef.current.category === "navigation" &&
+          lastActionRef.current.action === navigationAction &&
+          now - lastActionRef.current.time < 100 // 100ms debounce
+        ) {
+          return;
+        }
+
+        // Update last action reference
+        lastActionRef.current = {
+          category: "navigation",
+          action: navigationAction,
+          time: now,
+        };
+
         onAction("navigation", navigationAction);
         return;
       }
