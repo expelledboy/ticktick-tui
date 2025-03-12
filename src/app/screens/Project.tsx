@@ -5,45 +5,48 @@ import {
   type TaskStatus,
 } from "../../ticktick";
 import FocusList, { type RenderItemProps } from "../../components/FocusList";
-import { sortOrder } from "../../core/types";
-import type { SortOrder, Task } from "../../core/types";
-import { useCallback, useMemo, useState } from "react";
-import { useAppStore } from "../../store";
-import { __DEV, logError } from "../../core/logger";
+import { sortOrder, type Task } from "../../core/types";
+import { useCallback } from "react";
+import { STORE_WRITE, useAppStore } from "../../store";
+import { logError } from "../../core/logger";
 import { formatTaskPriority, formatTaskStatus } from "../../ticktick/format";
 import { useKeyHandler } from "../../keybindings";
-import { TaskSchema } from "../../ticktick/schema";
+import { useSortedTasks } from "../../hooks/useSortedTasks";
+import { useDebugLogs } from "../../hooks/useDebugLogs";
 
-export default function Project({ projectId }: { projectId: string }) {
+export default function Project() {
   const inFocus = useAppStore((s) => s.activeView === "project");
-  const { data: projectData, isLoading, error } = useProjectData(projectId);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const selectedProjectId = useAppStore((s) => s.selectedProjectId);
+  const selectedTaskId = useAppStore((s) => s.selectedTaskId);
 
-  // Get default orderBy from config
-  const [orderBy, setOrderBy] = useState<SortOrder>(config.views.orderBy);
+  useDebugLogs("Project");
 
-  // Sort tasks by orderBy
-  const sortedTasks = useMemo(() => {
-    return sortTasks(projectData?.tasks ?? [], orderBy).map((t) =>
-      TaskSchema.parse(t)
-    );
-  }, [projectData, orderBy]);
+  const { sortedTasks, orderBy, setOrderBy } = useSortedTasks({
+    projectId: selectedProjectId,
+  });
 
-  useKeyHandler("project", (category, action) => {
-    if (category === "project" && action === "toggleOrderBy") {
+  const {
+    data: projectData,
+    isLoading,
+    error,
+  } = useProjectData(selectedProjectId);
+
+  // Toggle orderBy
+  useKeyHandler("project", (_category, action) => {
+    if (action === "toggleOrderBy") {
       setOrderBy(
         sortOrder[(sortOrder.indexOf(orderBy) + 1) % sortOrder.length]
       );
     }
   });
 
+  // Toggle selected task
   const handleSelectTask = useCallback(
     (task: Task | null) => {
       if (task?.id === selectedTaskId) {
-        setSelectedTaskId(null);
+        STORE_WRITE.setSelectedTaskId(null);
       } else {
-        __DEV("Selecting task", { task });
-        setSelectedTaskId(task?.id ?? null);
+        STORE_WRITE.setSelectedTaskId(task?.id ?? null);
       }
     },
     [selectedTaskId]
@@ -109,7 +112,7 @@ export default function Project({ projectId }: { projectId: string }) {
       ) : error ? (
         <Text>Error: {error.message}</Text>
       ) : !projectData ? (
-        <Text>No project data available</Text>
+        <Text>No project selected</Text>
       ) : (
         <FocusList<Task>
           mode="project"

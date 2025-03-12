@@ -8,6 +8,7 @@ import { useEffect, useState, useCallback, useRef, memo } from "react";
 import { Box, Text, type Key } from "ink";
 import { useKeyHandler } from "../keybindings";
 import type { AppMode } from "../keybindings/useKeyHandler";
+import { debug } from "../core/logger";
 
 export interface RenderItemProps<T> {
   item: T;
@@ -32,7 +33,7 @@ export interface FocusListProps<T> {
   emptyMessage?: string; // Message to show when list is empty
 
   // Mode
-  mode?: AppMode;
+  mode: AppMode;
 }
 
 // Utility function for comparing arrays
@@ -126,7 +127,7 @@ function FocusList<T>({
   renderEmpty,
   title,
   emptyMessage = "No items found",
-  mode = "global",
+  mode,
 }: FocusListProps<T>) {
   // Use the custom hook for focus management
   const { focusedIndex, navigate } = useFocusManagement(
@@ -146,25 +147,11 @@ function FocusList<T>({
         onSelect(items[focusedIndex]);
       }
     },
-    [items, focusedIndex, onSelect, navigate]
-  );
-
-  // Handle arrows and enter key (default behavior)
-  const handleDefaultAction = useCallback(
-    (input: string, key: Key) => {
-      if (key.return && onSelect && items[focusedIndex]) {
-        onSelect(items[focusedIndex]);
-      } else if (key.upArrow) {
-        navigate("up");
-      } else if (key.downArrow) {
-        navigate("down");
-      }
-    },
-    [items, focusedIndex, onSelect, navigate]
+    [items, focusedIndex, onSelect, navigate, mode]
   );
 
   // Register keyboard handler
-  useKeyHandler(mode, handleAction, handleDefaultAction);
+  useKeyHandler(mode, handleAction);
 
   // Helper function to render the header
   const renderHeaderContent = useCallback(() => {

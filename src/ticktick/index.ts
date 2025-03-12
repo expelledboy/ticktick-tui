@@ -1,2 +1,2 @@
-export * from "./hooks";
+export * from "./useReactQuery";
 export * from "./types";

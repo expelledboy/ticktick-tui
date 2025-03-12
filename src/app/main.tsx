@@ -43,6 +43,10 @@ export const runApp = async () => {
     const startTime = Date.now();
     const timeout = 3000; // 3 seconds timeout
 
+    // TODO: Figure out why this doesn't work
+    // Clear the screen
+    app.clear();
+
     while (queryClient.isMutating()) {
       // Check if we've exceeded the timeout
       if (Date.now() - startTime > timeout) {
@@ -60,10 +64,6 @@ export const runApp = async () => {
       // Wait for the next tick
       await sleep(100);
     }
-
-    // TODO: Figure out why this doesn't work
-    // Clear the screen
-    app.clear();
 
     // Ensure process exits
     process.exit(0);

@@ -3,11 +3,35 @@ import { render } from "ink-testing-library";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { mockState } from "../src/ticktick/api.mock";
 import type { Project, Task } from "../src/core/types";
+import { useAppStore } from "../src/store";
+import type { LogOperation } from "../src/core/logger";
+import { expect } from "bun:test";
+
+/**
+ * Helper function to improve error stack traces by removing the helper function frame
+ * from the stack trace. This makes errors appear to come from where the helper
+ * was invoked rather than from inside the helper.
+ */
+export function enhanceError(
+  error: Error,
+  omitFunction: Function,
+  customMessage?: string
+): Error {
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(error, omitFunction);
+  }
+
+  if (customMessage) {
+    error.message = `${customMessage}\n${error.message}`;
+  }
+
+  return error;
+}
 
 /**
  * Strip ANSI escape codes (colors, formatting) from terminal output
  */
-export function stripAnsi(text: string | undefined): string {
+export const stripAnsi = (text: string | undefined): string => {
   if (!text) return "";
 
   // This regex matches all ANSI escape sequences
@@ -15,7 +39,7 @@ export function stripAnsi(text: string | undefined): string {
     /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
     ""
   );
-}
+};
 
 /**
  * Create a QueryClient configured for testing
@@ -93,7 +117,10 @@ export async function waitForText(
     `Actual content (${strippedOutput.length} chars):\n"${strippedOutput}"`
   );
 
-  throw new Error(`Timeout: Text "${text}" not found within ${timeout}ms`);
+  const error = new Error(
+    `Timeout: Text "${text}" not found within ${timeout}ms`
+  );
+  throw enhanceError(error, waitForText);
 }
 
 /**
@@ -107,18 +134,24 @@ export async function waitForCondition(
 
   while (Date.now() - startTime < timeout) {
     if (condition()) {
+      // Wait for 1 more tick to ensure UI updates are applied
+      await new Promise((resolve) => setTimeout(resolve, 1));
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
-  throw new Error(`Timeout: Condition not met within ${timeout}ms`);
+  const error = new Error(`Timeout: Condition not met within ${timeout}ms`);
+  throw enhanceError(error, waitForCondition);
 }
 
 /**
  * Simulate key presses in the terminal
  */
-export function press(stdin: { write: (input: string) => void }, key: string) {
+export const press = (
+  stdin: { write: (input: string) => void },
+  key: string
+) => {
   const keyMap: Record<string, string> = {
     up: "\u001B[A",
     down: "\u001B[B",
@@ -130,6 +163,16 @@ export function press(stdin: { write: (input: string) => void }, key: string) {
     tab: "\t",
     backspace: "\b",
     delete: "\u007F",
+    // https://stackoverflow.com/a/75030219/644945
+    ctrl_p: "\u0010",
+    ctrl_l: "\u000C",
+    ctrl_d: "\u0004",
+    ctrl_g: "\u0007",
+    ctrl_n: "\u0011",
+    ctrl_o: "\u000F",
+    ctrl_q: "\u0011",
+    ctrl_r: "\u0012",
+    ctrl_s: "\u0013",
   };
 
   if (key in keyMap) {
@@ -137,29 +180,29 @@ export function press(stdin: { write: (input: string) => void }, key: string) {
   } else {
     stdin.write(key);
   }
-}
+};
 
 /**
  * Type a string in the terminal
  */
-export function typeText(
+export const typeText = (
   stdin: { write: (input: string) => void },
   text: string
-) {
+) => {
   for (const char of text) {
     stdin.write(char);
   }
-}
+};
 
 /**
  * Add test data to the mock API
  */
-export function setupTestData(
+export const setupTestData = (
   projects: Array<Partial<Project> & { id: string; name: string }> = [],
   tasks: Array<
     Partial<Task> & { id: string; projectId: string; title: string }
   > = []
-) {
+) => {
   // Reset the mock state
   mockState.reset();
 
@@ -172,58 +215,10 @@ export function setupTestData(
   tasks.forEach((task) => {
     mockState.addTask(task as Task);
   });
-}
-
-/**
- * Create a test helper for working with specific components
- */
-export function createTestHelper(ui: React.ReactElement) {
-  const result = renderWithQuery(ui);
-
-  return {
-    // Add a clean version of lastFrame that strips ANSI codes
-    lastFrame: () => {
-      const frame = result.lastFrame();
-      return frame ? stripAnsi(frame) : "";
-    },
-
-    // Keep the original frame with ANSI codes
-    rawFrame: result.lastFrame,
-
-    // Access to the querClient for advanced testing
-    queryClient: result.queryClient,
-
-    // Helper methods for waiting
-    waitForText: (text: string, timeout?: number) =>
-      waitForText(() => result.lastFrame() || "", text, timeout),
-
-    waitForCondition: (condition: () => boolean, timeout?: number) =>
-      waitForCondition(condition, timeout),
-
-    // Add a method to wait for query status
-    waitForQueryStatus: (
-      queryKey: any[],
-      status: "error" | "success" | "loading",
-      timeout?: number
-    ) => waitForQueryStatus(result.queryClient, queryKey, status, timeout),
-
-    // Input helpers
-    press: (key: string) => press(result.stdin, key),
-
-    type: (text: string) => typeText(result.stdin, text),
-
-    // Cleanup method
-    unmount: result.unmount,
-
-    // Expose any other needed properties from result
-    frames: result.frames,
-    stdin: result.stdin,
-  };
-}
+};
 
 /**
  * Wait for a specific query status (success, error, loading)
- * This is more reliable than using setTimeout in tests
  */
 export async function waitForQueryStatus(
   queryClient: QueryClient,
@@ -235,4 +230,53 @@ export async function waitForQueryStatus(
     const state = queryClient.getQueryState(queryKey);
     return state?.status === status;
   }, timeout);
+}
+
+/**
+ * Wait for a specific log operation to occur
+ * This is useful for waiting for specific application events during testing
+ */
+export async function waitForLogOperation(
+  operation: LogOperation,
+  match: Record<string, any>,
+  timeout = 3000
+): Promise<Record<string, any>> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    // Access logs from store
+    const rawLogs = useAppStore.getState().logs;
+
+    // Build matchers for each key-value pair
+    const matchers = Object.entries(match).map(
+      ([key, value]) => new RegExp(`${key}=${value}`)
+    );
+
+    // For every matcher, check if the log message matches
+    const found = rawLogs.find((log) => {
+      return (
+        log.message.includes(`[${operation}]`) &&
+        matchers.every((matcher) => matcher.test(log.message))
+      );
+    });
+
+    if (found) return found;
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  const errorMessage = `Timeout: Log operation "${operation}" not found within ${timeout}ms`;
+
+  // When timeout occurs, provide debug info
+  console.error(errorMessage);
+
+  // Get the last 5 logs for debugging
+  const rawLogs = useAppStore.getState().logs;
+  console.error("Last 5 logs:");
+  rawLogs.slice(-5).forEach((log) => {
+    console.error(`[${log.level}] ${log.message}`);
+  });
+
+  const error = new Error(errorMessage);
+  throw enhanceError(error, waitForLogOperation);
 }

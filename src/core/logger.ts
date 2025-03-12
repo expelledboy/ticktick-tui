@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import { config } from "./config";
 import { dirname } from "node:path";
 import { useAppStore } from "../store"; // Import the store
+import { DEV } from "../constants";
 
 // Cache for the log file path and directory
 let logFileCache: string | null = null;
@@ -58,10 +59,39 @@ export type LogOperation =
   | "CONFIG"
   | "KEYBINDING"
   | "KEYBINDING_TRIGGERED"
+  | "KEY_PRESSED"
+  | "KEY_IGNORED"
+  | "KEY_MATCHED"
+  | "KEY_UNMATCHED"
+  | "KEY_CONFLICT"
+  | "KEY_REMAPPED"
+  | "GLOBAL_KEY_ACTION"
   | "CHANGE_FOCUS"
   | "DEV"
   // Application errors
-  | "INVALID_DATA";
+  | "INVALID_DATA"
+  // Form operations
+  | "FORM_CREATED"
+  | "FORM_SUBMITTED"
+  | "FORM_CANCELED"
+  | "FORM_FIELD_CHANGED"
+  | "FORM_VALIDATION_ERROR"
+  | "FORM_NAVIGATION"
+  // View management
+  | "VIEW_CHANGED"
+  | "VIEW_RENDERED"
+  | "VIEW_ERROR"
+  // Component lifecycle
+  | "COMPONENT_MOUNTED"
+  | "COMPONENT_UNMOUNTED"
+  // Data mutations
+  | "MUTATION_STARTED"
+  | "MUTATION_SUCCEEDED"
+  | "MUTATION_FAILED"
+  | "MUTATION_LOADING"
+  // Test-specific
+  | "TEST_ACTION"
+  | "TEST_ASSERTION";
 
 /**
  * Format a log entry with key-value pairs
@@ -87,12 +117,6 @@ const formatLogData = (
   return `[${operation}] ${pairs}`;
 };
 
-// Dev only logs
-export const __DEV = (msg: string, data?: Record<string, any>): void => {
-  const message = formatLogData("DEV", { msg, data: JSON.stringify(data) });
-  updateStoreLog("DEBUG", message);
-};
-
 /**
  * Updates the store with a log entry
  */
@@ -114,6 +138,29 @@ const logToFile = (level: LogLevel, message: string): void => {
     }
   });
 };
+
+type InMemoryLog = {
+  op: LogOperation;
+  data: Record<string, any>;
+};
+
+/**
+ * The in memory logs used only for testing
+ */
+const IN_MEMORY_LOGS: InMemoryLog[] = [];
+
+/**
+ * Clear the in memory logs
+ */
+export const clearInMemoryLogs = (): void => {
+  IN_MEMORY_LOGS.length = 0;
+};
+
+/**
+ * Get the in memory logs
+ */
+export const getInMemoryLogs = (): InMemoryLog[] => IN_MEMORY_LOGS;
+
 /**
  * Log a debug message - only to in app logs
  * @param operation The operation being performed
@@ -124,6 +171,8 @@ export const debug = (
   data: Record<string, any> = {}
 ): void => {
   const message = formatLogData(operation, data);
+
+  if (DEV) IN_MEMORY_LOGS.push({ op: operation, data });
 
   // DEBUG logs are not written to file
   updateStoreLog("DEBUG", message);

@@ -2,6 +2,7 @@ import React, { memo, useEffect } from "react";
 import { Box } from "ink";
 import { useTerminalDimensions } from "../../hooks/useTerminalDimensions";
 import { useAppStore } from "../../store";
+import { SHOW_NUM_LOGS } from "../../constants";
 
 /**
  * Main layout component that manages the positioning of all UI elements
@@ -11,11 +12,12 @@ import { useAppStore } from "../../store";
 export const Layout: React.FC<{
   Projects: React.ReactNode;
   Project: React.ReactNode;
+  Task: React.ReactNode;
   Debug: React.ReactNode;
   Logs: React.ReactNode;
   StatusBar: React.ReactNode;
   Help: React.ReactNode;
-}> = memo(({ Projects, Project, Debug, Logs, StatusBar, Help }) => {
+}> = memo(({ Projects, Project, Task, Debug, Logs, StatusBar, Help }) => {
   // Get terminal dimensions
   const { width, height: heightReal } = useTerminalDimensions();
 
@@ -26,11 +28,10 @@ export const Layout: React.FC<{
   const debugMode = useAppStore((s) => s.debugMode);
   const viewLogs = useAppStore((s) => s.viewLogs);
   const viewProjects = useAppStore((s) => s.viewProjects);
-  const logLines = useAppStore((s) => s.logLines);
   const viewHelp = useAppStore((s) => s.viewHelp);
 
   // Calculate logs panel height - enough for entries + header + borders
-  const logsHeight = viewLogs ? logLines + 3 : 0;
+  const logsHeight = viewLogs ? SHOW_NUM_LOGS + 3 : 0;
 
   // Fixed dimensions
   const statusBarHeight = 2;
@@ -45,7 +46,7 @@ export const Layout: React.FC<{
     <Box flexDirection="column" width={width} height={height}>
       {/* Main Content Area - Flex row layout */}
       <Box flexDirection="row" height={mainContentHeight} flexGrow={1}>
-        {/* Projects Panel - Fixed width */}
+        {/* Projects List - Fixed width */}
         {viewProjects && (
           <Box
             width={projectsWidth}
@@ -58,13 +59,13 @@ export const Layout: React.FC<{
         )}
 
         {/* Project Panel - Takes remaining width */}
-        <Box
-          borderStyle="round"
-          borderColor="green"
-          flexGrow={1}
-          flexShrink={1}
-        >
+        <Box borderStyle="round" borderColor="green" flexShrink={1}>
           {Project}
+        </Box>
+
+        {/* Task Panel - Takes remaining width */}
+        <Box borderStyle="round" borderColor="green" flexGrow={1}>
+          {Task}
         </Box>
 
         {/* Help Panel - Alongside Project */}

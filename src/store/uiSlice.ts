@@ -13,6 +13,9 @@ type UIState = {
   focusedId: string | null;
   // Error
   error: string | null;
+  // Selected
+  selectedProjectId: string | null;
+  selectedTaskId: string | null;
 };
 
 type UIActions = {
@@ -27,6 +30,9 @@ type UIActions = {
   setFocusedId: (id: string | null) => void;
   // Error
   setError: (error: string | null) => void;
+  // Selected
+  setSelectedProjectId: (id: string | null) => void;
+  setSelectedTaskId: (id: string | null) => void;
 };
 
 type UISlice = UIState & UIActions;
@@ -46,7 +52,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   toggleViewHelp: () => set((s) => ({ viewHelp: !s.viewHelp })),
 
   // Navigation
-  activeView: "projectList",
+  activeView: "projects",
   focusedId: null,
   setActiveView: (view: ViewMode) => set((s) => ({ activeView: view })),
   setFocusedId: (id: string | null) => set((s) => ({ focusedId: id })),
@@ -54,4 +60,10 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   // Error
   error: null,
   setError: (error: string | null) => set(() => ({ error })),
+
+  // Selected
+  selectedProjectId: null,
+  selectedTaskId: null,
+  setSelectedProjectId: (id: string | null) => set(() => ({ selectedProjectId: id })),
+  setSelectedTaskId: (id: string | null) => set(() => ({ selectedTaskId: id })),
 });

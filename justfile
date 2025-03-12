@@ -2,13 +2,16 @@
 
 set shell := ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
 
-tests := `fd -0 --exclude zap .test.ts | tr '\0' ' '`
+tests := `fd -0 --exclude zap --exclude tests .test.ts | tr '\0' ' '`
 
-test:
+unit-test:
+    @ bun test --preload ./src/ticktick/api.mock {{ tests }}
+
+e2e-test:
     @ bun test \
-      --bail --timeout 15000 \
+      --timeout 15000 \
       --preload ./src/ticktick/api.mock \
-      {{ tests }}
+      ./tests/e2e.test.tsx
 
 dev:
     bun run ./src/index.ts

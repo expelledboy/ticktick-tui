@@ -2,14 +2,17 @@ import fs from "fs";
 import path from "path";
 import { config } from "../core/config";
 import * as logger from "../core/logger";
-import type { KeyBindings } from "./types";
 import { keybindingsSchema, defaultKeybindings } from "./schema";
+import { z } from "zod";
+
+// Define KeyBindings type from the schema
+type KeyBindings = z.infer<typeof keybindingsSchema>;
 
 // File path for storing keybindings
 const CONFIG_FILE = config.storage.keybindings;
 
 // Load keybindings from file or create if it doesn't exist
-export function loadKeybindings(): KeyBindings {
+function loadKeybindings(): KeyBindings {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       // Try to load and parse existing file
@@ -73,7 +76,11 @@ export function saveKeybindings(keybindings: KeyBindings): boolean {
   }
 }
 
+let keyBindings: KeyBindings | null = null;
+
 // Get all keybindings
 export function getAllKeybindings(): KeyBindings {
-  return loadKeybindings();
+  if (keyBindings) return keyBindings;
+  keyBindings = loadKeybindings();
+  return keyBindings;
 }

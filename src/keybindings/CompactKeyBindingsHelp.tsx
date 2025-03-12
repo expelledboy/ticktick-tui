@@ -2,7 +2,7 @@ import React, { memo, useMemo } from "react";
 import { Box, Text } from "ink";
 import { getAllKeybindings } from "./config";
 import { formatKeyBinding } from "./utils";
-import { parseKeybinding } from "./keyMatchingLogic";
+import { parseKeyPattern } from "./KeyBindingSystem";
 
 interface CompactKeyBindingsHelpProps {
   contexts?: string[]; // Display only a specific context, or all if not specified
@@ -53,8 +53,9 @@ function formatKeybindingPair(key: string, action: string): React.ReactNode {
   const actionLower = actionName.toLowerCase();
 
   // Parse the key to handle modifiers properly
-  const parsed = parseKeybinding(key);
-  const hasModifiers = parsed.key.ctrl || parsed.key.shift || parsed.key.meta;
+  const parsed = parseKeyPattern(key);
+  const hasModifiers =
+    parsed.modifiers.ctrl || parsed.modifiers.shift || parsed.modifiers.meta;
 
   // Extract the main key without modifiers
   // For example, from "ctrl+i" we get "i"
@@ -63,9 +64,9 @@ function formatKeybindingPair(key: string, action: string): React.ReactNode {
 
   // Build modifier prefix
   let prefix = "";
-  if (parsed.key.ctrl) prefix += "ctrl+";
-  if (parsed.key.shift) prefix += "shift+";
-  if (parsed.key.meta) prefix += "meta+";
+  if (parsed.modifiers.ctrl) prefix += "ctrl+";
+  if (parsed.modifiers.shift) prefix += "shift+";
+  if (parsed.modifiers.meta) prefix += "meta+";
 
   // Check if the main key appears anywhere in the action name
   if (mainKey.length === 1) {

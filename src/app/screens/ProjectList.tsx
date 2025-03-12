@@ -4,63 +4,40 @@
  * Displays a list of projects using the FocusList component
  * Fetches data from the API and manages project selection
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Text } from "ink";
 import FocusList, { type RenderItemProps } from "../../components/FocusList";
-import { useProjects } from "../../ticktick";
-import { useAppStore } from "../../store";
 import { type Project } from "../../core/types";
-import { ProjectSchema } from "../../ticktick/schema";
+import { useDebugLogs } from "../../hooks/useDebugLogs";
+import { useProjects } from "../../ticktick";
+import { STORE_WRITE, useAppStore } from "../../store";
+import { useCallback } from "react";
+
+const sortProjects = (projects: Project[]) => {
+  return projects.sort((a, b) => {
+    if (a.closed && !b.closed) return 1;
+    if (!a.closed && b.closed) return -1;
+    if (a.sortOrder && b.sortOrder) return a.sortOrder - b.sortOrder;
+    return a.name.localeCompare(b.name);
+  });
+};
 
 export const ProjectList = () => {
-  // Always call all hooks first, before any conditional logic
-  const inFocus = useAppStore((s) => s.activeView === "projectList");
-
-  // Fetch projects data
   const { data: projects, isLoading, error } = useProjects();
-
-  // Manage selected project
   const selectedProjectId = useAppStore((s) => s.selectedProjectId);
-  const setSelectedProjectId = useAppStore((s) => s.setSelectedProjectId);
 
-  // Update projects in store
-  const updateProjects = useAppStore((s) => s.updateProjects);
-  const setActiveView = useAppStore((s) => s.setActiveView);
+  useDebugLogs("ProjectList");
 
-  useEffect(() => {
-    if (projects) {
-      updateProjects(projects);
-    }
-  }, [projects, updateProjects]);
-
-  // Sorts project by sortOrder property
-  const sortedProjects = useMemo(() => {
-    return sortBySortOrder(projects ?? []).map((p) => ProjectSchema.parse(p));
-  }, [projects]);
-
-  // Handle project selection
   const handleSelectProject = useCallback(
     (project: Project | null) => {
-      if (!project) return;
-
-      setSelectedProjectId(project.id);
-      setActiveView("project");
+      if (project?.id === selectedProjectId) {
+        STORE_WRITE.setSelectedProjectId(null);
+      } else {
+        if (!project) return;
+        STORE_WRITE.setSelectedProjectId(project.id);
+        STORE_WRITE.setActiveView("project");
+      }
     },
-    [setSelectedProjectId, setActiveView]
-  );
-
-  // Define renderItem function outside of FocusList props
-  const renderProjectItem = useCallback(
-    ({ item, isFocused, isSelected }: RenderItemProps<Project>) => {
-      return (
-        <Box>
-          <Text color={isSelected ? "green" : undefined} bold={isFocused}>
-            {isFocused ? "› " : "  "} {item.name}
-          </Text>
-        </Box>
-      );
-    },
-    [inFocus]
+    [selectedProjectId]
   );
 
   // Use a single return with conditional rendering instead of early returns
@@ -71,29 +48,35 @@ export const ProjectList = () => {
         <Text>Loading projects...</Text>
       ) : error ? (
         // Render error state
+        // TODO: Globally handle errors into status bar
         <Text color="red">Error: {error.message}</Text>
       ) : (
         // Render the projects list
         <FocusList<Project>
-          mode="projectList"
+          mode="projects"
           title="Projects"
-          items={sortedProjects}
+          items={sortProjects(projects ?? [])}
           selectedId={selectedProjectId}
           onSelect={handleSelectProject}
           emptyMessage="No projects found"
           getItemId={(project) => project.id}
-          renderItem={renderProjectItem}
+          renderItem={ProjectItem}
         />
       )}
     </Box>
   );
 };
 
-export default ProjectList;
+const ProjectItem = ({
+  item: project,
+  isFocused,
+  isSelected,
+}: RenderItemProps<Project>) => (
+  <Box>
+    <Text color={isSelected ? "green" : undefined} bold={isFocused}>
+      {isFocused ? "› " : "  "} {project.name}
+    </Text>
+  </Box>
+);
 
-/**
- * Helper function to sort projects by their sortOrder property
- */
-function sortBySortOrder(projects: Project[]) {
-  return projects.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-}
+export default ProjectList;

@@ -1,7 +1,11 @@
 import type { Key } from "ink";
-import type { ActionCategory, KeyBind } from "./types";
 import { getAllKeybindings } from "./config";
-import { parseKeybinding } from "./keyMatchingLogic";
+import {
+  configToBindings,
+  getBindingPriority,
+  type KeyContext,
+  BindingPriority,
+} from "./KeyBindingSystem";
 
 export const emptyKey: Key & { space: boolean } = {
   upArrow: false,
@@ -36,17 +40,43 @@ export function formatKeyBinding(key: string): string {
     .replace(/rightarrow/i, "→");
 }
 
-// Create a map of parsed keybindings by category and action
-export function createKeyMap(): Map<string, [ActionCategory, string, KeyBind]> {
-  const keyMap = new Map<string, [ActionCategory, string, KeyBind]>();
-  const bindings = getAllKeybindings();
+/**
+ * Get priority information for all keybindings in the current context
+ * This helps UI components display which bindings are active and with what priority
+ *
+ * @param context Current key context (mode and active view)
+ * @returns Mapping of category/action to priority information
+ */
+export function getBindingPriorities(context: KeyContext): Record<
+  string,
+  {
+    priority: BindingPriority | null;
+    active: boolean;
+  }
+> {
+  // Convert config to bindings
+  const bindings = configToBindings(getAllKeybindings() as any);
 
-  Object.entries(bindings).forEach(([category, actions]) => {
-    Object.entries(actions).forEach(([action, key]) => {
-      const parsed = parseKeybinding(key);
-      keyMap.set(key, [category as ActionCategory, action, parsed]);
-    });
+  // Create result map
+  const result: Record<
+    string,
+    { priority: BindingPriority | null; active: boolean }
+  > = {};
+
+  // Process each binding
+  bindings.forEach((binding) => {
+    const { category, action } = binding.action;
+    const key = `${category}.${action}`;
+
+    // Get priority for this binding in the current context
+    const priority = getBindingPriority(binding, context);
+
+    // Add to result
+    result[key] = {
+      priority,
+      active: priority !== null,
+    };
   });
 
-  return keyMap;
+  return result;
 }

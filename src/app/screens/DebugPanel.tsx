@@ -11,7 +11,7 @@ export const DebugPanel = () => {
   return (
     <Box flexDirection="column">
       <Text bold underline>
-        Dev Tools
+        Debug (Developer Tool)
       </Text>
       <Text>View: {activeView}</Text>
     </Box>

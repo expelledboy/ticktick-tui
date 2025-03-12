@@ -4,7 +4,7 @@ import { useAppStore } from "../store";
 import type { Project, ProjectData, Task } from "../core/types";
 
 // Enhanced query key structure for more granular cache control
-const QUERY_KEYS = {
+export const QUERY_KEYS = {
   // Project related keys
   projects: {
     all: ["projects"],
@@ -68,14 +68,14 @@ export const useProjects = () => {
 /**
  * Hook for accessing and syncing tasks for a specific project
  */
-export const useProjectData = (projectId: string) => {
+export const useProjectData = (projectId: string | null) => {
   const setError = useAppStore((state) => state.setError);
 
   return useQuery({
-    queryKey: QUERY_KEYS.projects.data(projectId),
+    queryKey: QUERY_KEYS.projects.data(projectId ?? ""),
     queryFn: async () => {
       try {
-        return await api.getProjectData(projectId);
+        return await api.getProjectData(projectId ?? "");
       } catch (error) {
         if (error instanceof Error) {
           setError(`Failed to load tasks: ${error.message}`);
@@ -83,6 +83,7 @@ export const useProjectData = (projectId: string) => {
         throw error;
       }
     },
+    enabled: !!projectId, // Alway call hook, but only fetch if projectId is provided
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 24 * 60 * 60 * 1000, // 24 hours - keep data longer in cache for offline use
     retryOnMount: true, // Always retry when component remounts
@@ -581,4 +582,11 @@ export const useLoadingState = () => {
     batchTaskLoading:
       completeMultipleTasks.isPending || deleteMultipleTasks.isPending,
   };
+};
+
+export const REMOTE_MUTATION = {
+  useCompleteTask,
+  useDeleteTask,
+  useCompleteMultipleTasks,
+  useDeleteMultipleTasks,
 };

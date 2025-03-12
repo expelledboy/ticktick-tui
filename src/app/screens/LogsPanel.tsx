@@ -36,7 +36,7 @@ export const LogsPanel = () => {
           const keyValues = messageParts[1] || "";
 
           return (
-            <Text key={index}>
+            <Text key={index} wrap="truncate">
               {log.timestamp.toLocaleTimeString()}{" "}
               <Text color={levelColors[log.level]} bold>
                 {log.level.padEnd(5)}

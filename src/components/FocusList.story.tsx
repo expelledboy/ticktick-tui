@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Box, Text, render } from "ink";
 import FocusList from "./FocusList";
 
@@ -63,6 +63,7 @@ const TodoList = () => {
   return (
     <FocusList<TodoItem>
       items={todos}
+      mode="global"
       selectedId={selectedId}
       onSelect={(todo) => setSelectedId(todo?.id ?? null)}
       title="Todo Items"
@@ -85,6 +86,7 @@ const TodoList = () => {
 const EmptyList = () => (
   <FocusList<TodoItem>
     items={[]}
+    mode="global"
     title="Empty List"
     emptyMessage="Nothing to see here!"
     renderItem={({ item }) => <Text>{item.title}</Text>}
@@ -95,6 +97,7 @@ const EmptyList = () => (
 const TodoListCustomHeader = () => (
   <FocusList<TodoItem>
     items={moreTodos}
+    mode="global"
     title="More Tasks"
     renderItem={({ item, isFocused }) => (
       <Box>

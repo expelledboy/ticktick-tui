@@ -39,12 +39,8 @@ export type OAuth2Tokens = {
  *
  * These are tightly coupled with the keybindings
  */
-export type ViewMode =
-  | "projectList" // Viewing projects list
-  | "project" // Viewing tasks in a project
-  | "task" // Viewing a task
-  | "form" // Editing a task or project
-  | "dialog"; // Popup dialogs
+export const viewModes = ["projects", "project", "task"] as const;
+export type ViewMode = (typeof viewModes)[number];
 
 /**
  * Transforms paths to be absolute, replacing ~ with the HOME directory

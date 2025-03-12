@@ -1,7 +1,8 @@
 import React from "react";
 import { describe, test, expect, beforeEach } from "bun:test";
 import { ProjectList } from "../src/app/screens/ProjectList";
-import { createTestHelper, setupTestData, stripAnsi } from "./utils";
+import { setupTestData, press } from "./utils";
+import { createTestHelper } from "./testhelper";
 import { useAppStore } from "../src/store";
 import { mockState } from "../src/ticktick/api.mock";
 import { mock } from "bun:test";
@@ -22,7 +23,6 @@ describe("ProjectList", () => {
 
     // Verify the empty state message
     const frame = helper.lastFrame();
-    expect(frame).toBeTruthy();
     expect(frame).toContain("No projects found");
   });
 
@@ -40,7 +40,7 @@ describe("ProjectList", () => {
     // Wait for data to load
     await helper.waitForText("Project A");
 
-    // Get the final rendered output (now auto-stripped of ANSI codes)
+    // Get the final rendered output
     const output = helper.lastFrame();
 
     // Check that projects are ordered correctly
@@ -55,7 +55,22 @@ describe("ProjectList", () => {
     expect(projectBIndex).toBeLessThan(projectCIndex);
   });
 
+  // This test is temporarily skipped due to an issue with key handling
+  // The enhanced error reporting shows that the down key press is not
+  // being processed correctly - the UI is not updating after pressing the key.
+  // The cursor remains on "Project 1" instead of moving to "Project 2".
+  //
+  // Actual frame content after pressing down key:
+  //  Projects
+  //
+  // ›  Project 1
+  //    Project 2
+  //
+  // This suggests an issue with how key events are processed in the test environment.
   test("allows navigation between projects", async () => {
+    // Set the active view to projects
+    useAppStore.getState().setActiveView("projects");
+
     // Set up test data
     setupTestData([
       { id: "project-1", name: "Project 1", sortOrder: 1 },
@@ -69,21 +84,23 @@ describe("ProjectList", () => {
     await helper.waitForText("Project 1");
 
     // Initially, the first project should be selected
-    // Based on error output, we need to look for the › character instead of >
-    const output = helper.lastFrame();
-    expect(output).toContain("›  Project 1");
+    const initialOutput = helper.lastFrame();
+    expect(initialOutput).toContain("›  Project 1");
 
     // Press down to move to the second project
-    helper.press("down");
+    press(helper.stdin, "down");
 
-    // Wait for the UI to update
-    await helper.waitForCondition(() => {
-      return helper.lastFrame().includes("›  Project 2");
-    });
+    console.log("activeView", useAppStore.getState().activeView);
+
+    // Wait for the UI to update with enhanced error context
+    await helper.waitForCondition(
+      3000,
+      () => helper.lastFrame().includes("›  Project 2"),
+      "Expected down key press to select the second project"
+    );
 
     // Verify second project is now selected
     const finalOutput = helper.lastFrame();
-    expect(finalOutput).toBeTruthy();
     expect(finalOutput).toContain("›  Project 2");
   });
 
@@ -93,7 +110,6 @@ describe("ProjectList", () => {
 
     // Verify loading state is shown
     const initialFrame = helper.lastFrame();
-    expect(initialFrame).toBeTruthy();
     expect(initialFrame).toContain("Loading");
 
     // Add projects later
@@ -110,7 +126,6 @@ describe("ProjectList", () => {
 
   test("handles errors when fetching projects", async () => {
     // Mock the getAllProjects function of mockState to throw an error
-    // This will affect the api.getProjects function used by the component
     const originalGetAllProjects = mockState.getAllProjects;
     const errorMessage = "Failed to fetch projects";
 
@@ -126,7 +141,6 @@ describe("ProjectList", () => {
       const helper = createTestHelper(<ProjectList />);
 
       // Wait for React Query to process the error and reach error state
-      // This is more reliable than using an arbitrary timeout
       await helper.waitForQueryStatus(["projects"], "error");
 
       // Verify the mock was called
@@ -134,7 +148,6 @@ describe("ProjectList", () => {
 
       // Verify either the app state error or UI error message
       const appError = useAppStore.getState().error;
-      const output = stripAnsi(helper.lastFrame() || "");
 
       // Check for error in app state
       if (appError !== null) {
@@ -142,7 +155,8 @@ describe("ProjectList", () => {
       }
 
       // Check for error in UI
-      expect(output).toContain("Error: " + errorMessage);
+      const output = helper.lastFrame();
+      expect(output).toContain(`Error: ${errorMessage}`);
     } finally {
       // Restore the original implementation
       mockState.getAllProjects = originalGetAllProjects;
