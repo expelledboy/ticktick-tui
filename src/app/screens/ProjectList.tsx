@@ -30,9 +30,10 @@ export const ProjectList = () => {
   const handleSelectProject = useCallback(
     (project: Project | null) => {
       if (project?.id === selectedProjectId) {
+        // Deselect project
         STORE_WRITE.setSelectedProjectId(null);
-      } else {
-        if (!project) return;
+      } else if (project) {
+        // Select project and change view
         STORE_WRITE.setSelectedProjectId(project.id);
         STORE_WRITE.setActiveView("project");
       }

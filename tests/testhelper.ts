@@ -155,7 +155,7 @@ export function createTestHelper(uiComponent: React.ReactElement) {
     console.error("Timeout waiting for text. Current content:");
     console.error(`Expected: "${text}"`);
     console.error(
-      `Actual content (${strippedOutput.length} chars):\n"${strippedOutput}"`
+      `Actual content (${strippedOutput.length} chars):\n${strippedOutput}`
     );
 
     const error = new Error(

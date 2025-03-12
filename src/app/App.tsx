@@ -1,10 +1,9 @@
-import { Box, Text, useApp, type Key } from "ink";
+import { Box, Text } from "ink";
 import { Layout } from "./screens/Layout";
 import { useAppStore } from "../store";
 import { CompactKeyBindingsHelp, KeyBindingsHelp } from "../keybindings";
 
 // Features
-import { useSyncState } from "../hooks/useSyncState";
 import { useDebugLogs } from "../hooks/useDebugLogs";
 import { useGlobalKeybindings } from "../keybindings/useGlobalKeybindings";
 
@@ -41,7 +40,6 @@ export const App = () => {
   useDebugLogs("App");
   useGlobalKeybindings();
   useKeyLogger();
-  useSyncState();
 
   return viewApp ? (
     <Layout
