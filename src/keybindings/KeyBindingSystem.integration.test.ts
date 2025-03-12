@@ -200,4 +200,60 @@ describe("KeyBindingSystem Integration", () => {
     const priority = getBindingPriority(matchedBinding!, keyLoggerContext);
     expect(priority).toBe(BindingPriority.ExactModeMatch);
   });
+
+  test("prioritizes modifier key bindings over non-modifier bindings", () => {
+    // Create a config with potential conflict: 'd' and 'ctrl+d'
+    const conflictConfig = {
+      global: {
+        toggleDebug: "ctrl+d",
+      },
+      projects: {
+        deleteProject: "d",
+      },
+    };
+
+    const bindings = configToBindings(conflictConfig);
+    const context = createContext("global", "projects");
+
+    // When pressing 'd' without modifiers
+    const dInput = createRawInput("d");
+    const regularBinding = findMatchingBinding(bindings, dInput, context);
+
+    // Should match the projects.deleteProject binding
+    expect(regularBinding).not.toBeNull();
+    expect(regularBinding?.action.category).toBe("projects");
+    expect(regularBinding?.action.action).toBe("deleteProject");
+
+    // When pressing 'ctrl+d'
+    const ctrlDInput = createRawInput("d", { ctrl: true });
+    const modifierBinding = findMatchingBinding(bindings, ctrlDInput, context);
+
+    // Should match the global.toggleDebug binding
+    expect(modifierBinding).not.toBeNull();
+    expect(modifierBinding?.action.category).toBe("global");
+    expect(modifierBinding?.action.action).toBe("toggleDebug");
+
+    // Even if we set up this test with a direct conflict in the same category,
+    // the modifier key binding should win
+    const directConflictConfig = {
+      projects: {
+        deleteProject: "d",
+        debugProject: "ctrl+d",
+      },
+    };
+
+    const conflictBindings = configToBindings(directConflictConfig);
+    const projectsContext = createContext("projects", "projects");
+
+    const conflictCtrlDInput = createRawInput("d", { ctrl: true });
+    const resolvedBinding = findMatchingBinding(
+      conflictBindings,
+      conflictCtrlDInput,
+      projectsContext
+    );
+
+    expect(resolvedBinding).not.toBeNull();
+    expect(resolvedBinding?.action.category).toBe("projects");
+    expect(resolvedBinding?.action.action).toBe("debugProject");
+  });
 });

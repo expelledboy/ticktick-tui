@@ -11,6 +11,7 @@ const priorityIndicators: Record<
   BindingPriority,
   { symbol: string; color: string }
 > = {
+  [BindingPriority.ModifierKey]: { symbol: "★", color: "magenta" },
   [BindingPriority.ExactModeMatch]: { symbol: "●", color: "green" },
   [BindingPriority.GlobalAction]: { symbol: "◉", color: "blue" },
   [BindingPriority.Fallback]: { symbol: "○", color: "yellow" },
@@ -67,12 +68,10 @@ const KeyBindingsHelp: React.FC<KeyBindingsHelpProps> = ({
         return (
           <Box key={action} marginLeft={1} flexDirection="row">
             {/* Priority indicator */}
-            <Box width={2} marginRight={1}>
-              {priorityIndicator || <Text> </Text>}
-            </Box>
+            <Box width={2}>{priorityIndicator || <Text> </Text>}</Box>
 
             {/* Key binding */}
-            <Box width={10} marginRight={1}>
+            <Box width={10}>
               <Text dimColor={!isActive} bold>
                 {formatKeyBinding(key)}
               </Text>
@@ -88,22 +87,31 @@ const KeyBindingsHelp: React.FC<KeyBindingsHelpProps> = ({
 
   return (
     <Box flexDirection="column">
-      <Box marginBottom={1} flexDirection="row">
-        <Text>Priority: </Text>
-        <Box marginRight={1}>
-          <Text color="green">●</Text>
+      <Box marginBottom={1} flexDirection="column">
+        <Box flexDirection="row">
+          <Box width={2} />
+          <Text>Priority: </Text>
         </Box>
-        <Text>Exact Mode</Text>
-        <Box width={2} />
-        <Box marginRight={1}>
-          <Text color="blue">◉</Text>
+        <Box flexDirection="row">
+          <Box marginRight={1}>
+            <Text color="green">●</Text>
+          </Box>
+          <Text>Exact Mode</Text>
         </Box>
-        <Text>Global Action</Text>
-        <Box width={2} />
-        <Box marginRight={1}>
-          <Text color="yellow">○</Text>
+        <Box flexDirection="row">
+          <Box width={2} />
+          <Box marginRight={1}>
+            <Text color="blue">◉</Text>
+          </Box>
+          <Text>Global Action</Text>
         </Box>
-        <Text>Fallback</Text>
+        <Box flexDirection="row">
+          <Box width={2} />
+          <Box marginRight={1}>
+            <Text color="yellow">○</Text>
+          </Box>
+          <Text>Fallback</Text>
+        </Box>
       </Box>
 
       {contextual

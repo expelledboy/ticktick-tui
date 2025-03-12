@@ -268,6 +268,25 @@ describe("KeyBindingSystem", () => {
       );
     });
 
+    test("assigns ModifierKey priority to bindings with modifier keys", () => {
+      // Create a binding with a modifier key
+      const modifierBinding = createKeyBinding("ui", "toggleDebug", "ctrl+d");
+      // Create a binding without a modifier key
+      const regularBinding = createKeyBinding("projects", "deleteProject", "d");
+
+      const context: KeyContext = { mode: "global", activeView: "projects" };
+
+      // The binding with a modifier should have higher priority (ModifierKey)
+      expect(getBindingPriority(modifierBinding, context)).toBe(
+        BindingPriority.ModifierKey
+      );
+
+      // The regular binding should have a lower priority
+      expect(getBindingPriority(regularBinding, context)).toBe(
+        BindingPriority.ExactModeMatch
+      );
+    });
+
     // Note: Testing the Fallback priority is not practical with our current implementation
     // because our isBindingActiveInContext logic makes it hard to create a scenario
     // where a binding is active but gets Fallback priority. This would require

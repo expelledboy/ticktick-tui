@@ -1,10 +1,9 @@
-import React from "react";
 import { describe, test, expect, beforeEach } from "bun:test";
-import { ProjectList } from "../src/app/screens/ProjectList";
-import { setupTestData, press } from "./utils";
-import { createTestHelper } from "./testhelper";
-import { useAppStore } from "../src/store";
-import { mockState } from "../src/ticktick/api.mock";
+import { ProjectList } from "./ProjectList";
+import { setupTestData, press } from "../../../tests/utils";
+import { createTestHelper } from "../../../tests/testhelper";
+import { useAppStore } from "../../store";
+import { mockState } from "../../ticktick/api.mock";
 import { mock } from "bun:test";
 
 describe("ProjectList", () => {
@@ -55,18 +54,6 @@ describe("ProjectList", () => {
     expect(projectBIndex).toBeLessThan(projectCIndex);
   });
 
-  // This test is temporarily skipped due to an issue with key handling
-  // The enhanced error reporting shows that the down key press is not
-  // being processed correctly - the UI is not updating after pressing the key.
-  // The cursor remains on "Project 1" instead of moving to "Project 2".
-  //
-  // Actual frame content after pressing down key:
-  //  Projects
-  //
-  // ›  Project 1
-  //    Project 2
-  //
-  // This suggests an issue with how key events are processed in the test environment.
   test("allows navigation between projects", async () => {
     // Set the active view to projects
     useAppStore.getState().setActiveView("projects");

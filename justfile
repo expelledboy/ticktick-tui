@@ -13,6 +13,9 @@ e2e-test:
       --preload ./src/ticktick/api.mock \
       ./tests/e2e.test.tsx
 
+test-keybindings:
+    @ bun test --preload ./src/ticktick/api.mock ./src/keybindings/*.test.ts
+
 dev:
     bun run ./src/index.ts
 

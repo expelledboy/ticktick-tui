@@ -22,7 +22,13 @@ import { viewModes, type ViewMode } from "../core/types";
  */
 export enum BindingPriority {
   /**
-   * Highest priority: the binding's category exactly matches the current mode
+   * Highest priority: bindings with modifier keys (ctrl, shift, meta)
+   * Example: 'ctrl+d' over just 'd'
+   */
+  ModifierKey = -1,
+
+  /**
+   * High priority: the binding's category exactly matches the current mode
    * Example: A 'project' binding when in 'project' mode
    */
   ExactModeMatch = 0,
@@ -256,6 +262,16 @@ export function getBindingPriority(
   // First check if the binding is active in this context
   if (!isBindingActiveInContext(binding, context)) {
     return null;
+  }
+
+  // HIGHEST PRIORITY: Bindings with modifiers (ctrl, shift, meta)
+  // This ensures ctrl+d is prioritized over just 'd'
+  if (
+    binding.modifiers.ctrl ||
+    binding.modifiers.shift ||
+    binding.modifiers.meta
+  ) {
+    return BindingPriority.ModifierKey;
   }
 
   const { category } = binding.action;

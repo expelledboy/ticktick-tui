@@ -34,7 +34,7 @@ describe("App", () => {
     await app.waitForCondition(200, () => !app.lastFrame().includes("Logs"));
   });
 
-  test.skip("toggle debug panel", async () => {
+  test("toggle debug panel", async () => {
     app.press("ctrl_d");
 
     await app.waitForCondition(500, () =>
@@ -42,11 +42,11 @@ describe("App", () => {
     );
   });
 
-  test.skip("toggle help panel", async () => {
+  test("toggle help panel", async () => {
     app.press("?");
 
     await app.waitForCondition(500, () =>
-      app.lastFrame().includes("Priority:")
+      app.lastFrame().includes("NAVIGATION")
     );
   });
 
