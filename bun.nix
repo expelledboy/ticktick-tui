@@ -260,6 +260,14 @@
       };
     }
     {
+      name = "ink-testing-library";
+      path = fetchurl {
+        name = "ink-testing-library@4.0.0";
+        url  = "https://registry.npmjs.org/ink-testing-library/-/ink-testing-library-4.0.0.tgz";
+        hash = "sha256-dYgj5t0dLiqs6aeFZgJeJtOKs8WQ6BHTh1SjFwMXiHo=";
+      };
+    }
+    {
       name = "is-docker";
       path = fetchurl {
         name = "is-docker@3.0.0";
