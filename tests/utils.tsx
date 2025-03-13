@@ -5,8 +5,7 @@ import { mockState } from "../src/ticktick/api.mock";
 import type { Project, Task } from "../src/core/types";
 import { useAppStore } from "../src/store";
 import type { LogOperation } from "../src/core/logger";
-import { expect } from "bun:test";
-
+import { getInMemoryLogs } from "../src/core/logger";
 /**
  * Helper function to improve error stack traces by removing the helper function frame
  * from the stack trace. This makes errors appear to come from where the helper
@@ -175,9 +174,27 @@ export const press = async (
     ctrl_s: "\u0013",
   };
 
-  stdin.write(keyMap[key]);
-  // Add small delay to allow render cycle to start
-  await new Promise((resolve) => setTimeout(resolve, 3));
+  // Record initial log count to detect when processing completes
+  const initialLogCount = getInMemoryLogs().length;
+
+  // Give time for terminal to render from other events
+  await new Promise((resolve) => setTimeout(resolve, 1));
+
+  // Send the key press
+  stdin.write(keyMap[key] || key);
+
+  // Wait for key processing to complete by observing logs
+  await waitForCondition(() => {
+    const currentLogs = getInMemoryLogs();
+    // Look for new log entries indicating key processing
+    return (
+      currentLogs.length > initialLogCount &&
+      currentLogs.some((log) => log.op.includes("KEYBINDING_TRIGGERED"))
+    );
+  }, 1000);
+
+  // Wait for react to render
+  await new Promise((resolve) => setTimeout(resolve, 1));
 };
 
 /**

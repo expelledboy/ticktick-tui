@@ -5,15 +5,15 @@
  * Fetches data from the API and manages project selection
  */
 import { Box, Text } from "ink";
+import { useCallback, useMemo } from "react";
 import FocusList, { type RenderItemProps } from "../../components/FocusList";
 import { type Project } from "../../core/types";
 import { useDebugLogs } from "../../hooks/useDebugLogs";
 import { useProjects } from "../../ticktick";
 import { STORE_WRITE, useAppStore } from "../../store";
-import { useCallback } from "react";
 
 const sortProjects = (projects: Project[]) => {
-  return projects.sort((a, b) => {
+  return [...projects].sort((a, b) => {
     if (a.closed && !b.closed) return 1;
     if (!a.closed && b.closed) return -1;
     if (a.sortOrder && b.sortOrder) return a.sortOrder - b.sortOrder;
@@ -26,6 +26,12 @@ export const ProjectList = () => {
   const selectedProjectId = useAppStore((s) => s.selectedProjectId);
 
   useDebugLogs("ProjectList");
+
+  // Memoize sorted projects to prevent unnecessary re-renders
+  const sortedProjects = useMemo(
+    () => sortProjects(projects ?? []),
+    [projects]
+  );
 
   const handleSelectProject = useCallback(
     (project: Project | null) => {
@@ -52,11 +58,11 @@ export const ProjectList = () => {
         // TODO: Globally handle errors into status bar
         <Text color="red">Error: {error.message}</Text>
       ) : (
-        // Render the projects list
+        // Render the projects list with memoized sorted projects
         <FocusList<Project>
           mode="projects"
           title="Projects"
-          items={sortProjects(projects ?? [])}
+          items={sortedProjects}
           selectedId={selectedProjectId}
           onSelect={handleSelectProject}
           emptyMessage="No projects found"

@@ -36,15 +36,8 @@ export interface FocusListProps<T> {
   mode: AppMode;
 }
 
-// Utility function for comparing arrays
-function shallowEqual(a: any[], b: any[]): boolean {
-  if (a === b) return true;
-  if (a.length !== b.length) return false;
-
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
+function deepEqual(a: any[], b: any[]): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 // Custom hook to manage focus state and navigation
@@ -57,21 +50,25 @@ function useFocusManagement<T>(
   const firstMount = useRef(true);
   const previousItems = useRef(items);
   const previousSelectedId = useRef(selectedId);
+  const hasUserNavigated = useRef(false);
   const [renderCount, setRenderCount] = useState(0);
 
+  // Determine if items actually changed using deep comparison
+  const itemsChanged = !deepEqual(previousItems.current, items);
+  const selectedIdChanged = previousSelectedId.current !== selectedId;
+
   // Reset focused index when items or selection changes
+  // BUT only if user hasn't manually navigated
   useEffect(() => {
     if (items.length === 0) return;
-
-    const itemsChanged = !shallowEqual(previousItems.current, items);
-    const selectedIdChanged = previousSelectedId.current !== selectedId;
 
     // Update refs for next comparison
     previousItems.current = items;
     previousSelectedId.current = selectedId;
 
-    // Only proceed if this is the first mount or if data actually changed
-    if (!firstMount.current && !itemsChanged && !selectedIdChanged) {
+    // Skip focus reset if user has explicitly navigated
+    // and this is just a reference update (not content change)
+    if (hasUserNavigated.current && !itemsChanged && !selectedIdChanged) {
       return;
     }
 
@@ -82,6 +79,8 @@ function useFocusManagement<T>(
       );
       if (selectedIndex !== -1) {
         setFocusedIndex(selectedIndex);
+        // Update render count to trigger the debug log
+        setRenderCount((prev) => (prev + 1) % 1000);
         firstMount.current = false;
         return;
       }
@@ -95,14 +94,27 @@ function useFocusManagement<T>(
     // Otherwise focus the first item only on initial mount or when data actually changes
     if (firstMount.current || itemsChanged) {
       setFocusedIndex(0);
+      // Update render count to trigger the debug log
+      setRenderCount((prev) => (prev + 1) % 1000);
     }
-  }, [items, selectedId, getItemId]);
+  }, [items, selectedId, getItemId, itemsChanged, selectedIdChanged]);
+
+  // Reset the navigation flag when items truly change (not just reference changes)
+  useEffect(() => {
+    if (itemsChanged) {
+      hasUserNavigated.current = false;
+    }
+  }, [itemsChanged]);
 
   // Navigation functions - memoized
   const navigate = useCallback(
     (action: string) => {
       if (items.length === 0) return;
 
+      // Mark that user has explicitly navigated
+      hasUserNavigated.current = true;
+
+      // Use a functional update to ensure we're working with latest state
       switch (action) {
         case "up":
           setFocusedIndex((prev) => (prev - 1 + items.length) % items.length);
@@ -112,10 +124,10 @@ function useFocusManagement<T>(
           break;
       }
 
-      // Force a re-render
-      setRenderCount((c) => (c + 1) % 1000);
+      // Force a re-render by incrementing the render count
+      setRenderCount((prev) => (prev + 1) % 1000);
     },
-    [items.length]
+    [items.length, focusedIndex]
   );
 
   return { focusedIndex, navigate };
