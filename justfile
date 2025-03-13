@@ -58,3 +58,6 @@ local-run:
     bun run ./build/index.js
 
 run: typecheck local-build local-run
+
+storybook:
+    bun run storybook

@@ -20,6 +20,214 @@
       };
     }
     {
+      name = "@esbuild/aix-ppc64";
+      path = fetchurl {
+        name = "@esbuild/aix-ppc64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.25.1.tgz";
+        hash = "sha256-zXlDhXRJJC3M+kGW4B9F+VTaenEf6AoT+8J3YTXj2ag=";
+      };
+    }
+    {
+      name = "@esbuild/android-arm";
+      path = fetchurl {
+        name = "@esbuild/android-arm@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/android-arm/-/android-arm-0.25.1.tgz";
+        hash = "sha256-nRS6cfeltYQqftULTyKqUmr0Y/DuuGcEw3B8SlxxPZQ=";
+      };
+    }
+    {
+      name = "@esbuild/android-arm64";
+      path = fetchurl {
+        name = "@esbuild/android-arm64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/android-arm64/-/android-arm64-0.25.1.tgz";
+        hash = "sha256-og10PfUL5TVHVG5775XSJIXN5NQkhf/na9DqhVVfeUQ=";
+      };
+    }
+    {
+      name = "@esbuild/android-x64";
+      path = fetchurl {
+        name = "@esbuild/android-x64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/android-x64/-/android-x64-0.25.1.tgz";
+        hash = "sha256-e9tnKkWfYfOyV0kddhEGvD6CqbKVJefBKTATU37n/mg=";
+      };
+    }
+    {
+      name = "@esbuild/darwin-arm64";
+      path = fetchurl {
+        name = "@esbuild/darwin-arm64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.25.1.tgz";
+        hash = "sha256-1bUQnOTL23BXuGe4BS9r+eUctl0+YxinUeNdfQxNgyY=";
+      };
+    }
+    {
+      name = "@esbuild/darwin-x64";
+      path = fetchurl {
+        name = "@esbuild/darwin-x64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.25.1.tgz";
+        hash = "sha256-yZ5UeMUAfBpoD8eHYGYScclp4AyH27RscOrqKYz6Ii8=";
+      };
+    }
+    {
+      name = "@esbuild/freebsd-arm64";
+      path = fetchurl {
+        name = "@esbuild/freebsd-arm64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/freebsd-arm64/-/freebsd-arm64-0.25.1.tgz";
+        hash = "sha256-75XKn10+dAbZORK02NBjIipmKjTKJNRRENfp1Jt5wxs=";
+      };
+    }
+    {
+      name = "@esbuild/freebsd-x64";
+      path = fetchurl {
+        name = "@esbuild/freebsd-x64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/freebsd-x64/-/freebsd-x64-0.25.1.tgz";
+        hash = "sha256-l6bN1z7DlyGf287cDO3IJYFVxQ5JPXq9Qkixu0U6ajU=";
+      };
+    }
+    {
+      name = "@esbuild/linux-arm";
+      path = fetchurl {
+        name = "@esbuild/linux-arm@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-arm/-/linux-arm-0.25.1.tgz";
+        hash = "sha256-uf88IvY7qB2GvgKS3VoO1MXaUATuBL1yfJODpBB0qMs=";
+      };
+    }
+    {
+      name = "@esbuild/linux-arm64";
+      path = fetchurl {
+        name = "@esbuild/linux-arm64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.25.1.tgz";
+        hash = "sha256-cHcckhJYXP0bGQRl+S2umNHT/EpPq1ysvvcUV+4I4lQ=";
+      };
+    }
+    {
+      name = "@esbuild/linux-ia32";
+      path = fetchurl {
+        name = "@esbuild/linux-ia32@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-ia32/-/linux-ia32-0.25.1.tgz";
+        hash = "sha256-InwHV5FB6uCbM5L/6wdtzci34wzJXDOk3dxoNNjETY8=";
+      };
+    }
+    {
+      name = "@esbuild/linux-loong64";
+      path = fetchurl {
+        name = "@esbuild/linux-loong64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-loong64/-/linux-loong64-0.25.1.tgz";
+        hash = "sha256-lAAg3r6X3LMTxRe/U8M399NArw6fxfCCuxRmuPniYWM=";
+      };
+    }
+    {
+      name = "@esbuild/linux-mips64el";
+      path = fetchurl {
+        name = "@esbuild/linux-mips64el@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-mips64el/-/linux-mips64el-0.25.1.tgz";
+        hash = "sha256-W2j9UVeg+E70WTle9MOyIFC/SWJMZDVGvI7EWhGRm0A=";
+      };
+    }
+    {
+      name = "@esbuild/linux-ppc64";
+      path = fetchurl {
+        name = "@esbuild/linux-ppc64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-ppc64/-/linux-ppc64-0.25.1.tgz";
+        hash = "sha256-0EJqBelO+PLFgFG/h3N+XkgmjGhq6UWdo1MTvFKQCbk=";
+      };
+    }
+    {
+      name = "@esbuild/linux-riscv64";
+      path = fetchurl {
+        name = "@esbuild/linux-riscv64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-riscv64/-/linux-riscv64-0.25.1.tgz";
+        hash = "sha256-uk6DsEt/ynQ7lHr8xBEWNql2rAKLLMa1bgGPcmAnbVI=";
+      };
+    }
+    {
+      name = "@esbuild/linux-s390x";
+      path = fetchurl {
+        name = "@esbuild/linux-s390x@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-s390x/-/linux-s390x-0.25.1.tgz";
+        hash = "sha256-Wgo+/cW6XXuJumFIwJGumR+HYS+8j49pCQ7Z5VJ5VcM=";
+      };
+    }
+    {
+      name = "@esbuild/linux-x64";
+      path = fetchurl {
+        name = "@esbuild/linux-x64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.1.tgz";
+        hash = "sha256-o5csINGVRXkrpsar5WS2HJH2bPokL/m//Z5dWcZUUuU=";
+      };
+    }
+    {
+      name = "@esbuild/netbsd-arm64";
+      path = fetchurl {
+        name = "@esbuild/netbsd-arm64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/netbsd-arm64/-/netbsd-arm64-0.25.1.tgz";
+        hash = "sha256-HeskwRc7ItfQ+ze4hBB6vhWCjL1Mby4dyq6pFvfmzpI=";
+      };
+    }
+    {
+      name = "@esbuild/netbsd-x64";
+      path = fetchurl {
+        name = "@esbuild/netbsd-x64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/netbsd-x64/-/netbsd-x64-0.25.1.tgz";
+        hash = "sha256-Ns7alUyASon8ugTGU1hL4Tz6EwhDRIWSxwIgmuoXw/Q=";
+      };
+    }
+    {
+      name = "@esbuild/openbsd-arm64";
+      path = fetchurl {
+        name = "@esbuild/openbsd-arm64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/openbsd-arm64/-/openbsd-arm64-0.25.1.tgz";
+        hash = "sha256-fhLJcLvE26fBtuCemhDHueUetjcI5S+jv7Jszmaj9uE=";
+      };
+    }
+    {
+      name = "@esbuild/openbsd-x64";
+      path = fetchurl {
+        name = "@esbuild/openbsd-x64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/openbsd-x64/-/openbsd-x64-0.25.1.tgz";
+        hash = "sha256-w0ReChD5NwiLecE4KiV40azP6VSeOrubsWbEfdQwtYc=";
+      };
+    }
+    {
+      name = "@esbuild/sunos-x64";
+      path = fetchurl {
+        name = "@esbuild/sunos-x64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/sunos-x64/-/sunos-x64-0.25.1.tgz";
+        hash = "sha256-oTCh3JiXrXicysL4Bb516bFo48SS7IYaC6T1tWW/96A=";
+      };
+    }
+    {
+      name = "@esbuild/win32-arm64";
+      path = fetchurl {
+        name = "@esbuild/win32-arm64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/win32-arm64/-/win32-arm64-0.25.1.tgz";
+        hash = "sha256-OChoeGmd/qiUhNQeThZHVvdKIhtcHxd2C3PW6/3n9Dg=";
+      };
+    }
+    {
+      name = "@esbuild/win32-ia32";
+      path = fetchurl {
+        name = "@esbuild/win32-ia32@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/win32-ia32/-/win32-ia32-0.25.1.tgz";
+        hash = "sha256-tydb9FZ3r2WzmHDapgc/Gb2joeFQj4fKHfqml7yRQzQ=";
+      };
+    }
+    {
+      name = "@esbuild/win32-x64";
+      path = fetchurl {
+        name = "@esbuild/win32-x64@0.25.1";
+        url  = "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.25.1.tgz";
+        hash = "sha256-ClLTZsEq25qwRVj74p17V/fMdWnQgdKjVSehttaw0+o=";
+      };
+    }
+    {
+      name = "@expelledboy/ink-storybook";
+      path = fetchurl {
+        name = "@expelledboy/ink-storybook@0.1.8";
+        url  = "https://registry.npmjs.org/@expelledboy/ink-storybook/-/ink-storybook-0.1.8.tgz";
+        hash = "sha256-lctFE6fr+NSHCehSrwCO5xPvMub1s5jIgy/IuEfvxiI=";
+      };
+    }
+    {
       name = "@tanstack/query-core";
       path = fetchurl {
         name = "@tanstack/query-core@5.67.2";
@@ -228,6 +436,14 @@
       };
     }
     {
+      name = "esbuild";
+      path = fetchurl {
+        name = "esbuild@0.25.1";
+        url  = "https://registry.npmjs.org/esbuild/-/esbuild-0.25.1.tgz";
+        hash = "sha256-7Zv4JWb+DjpeATF9Z2vtPI8kFlbA1L0w+WtchP2g+cs=";
+      };
+    }
+    {
       name = "escape-string-regexp";
       path = fetchurl {
         name = "escape-string-regexp@2.0.0";
@@ -236,11 +452,27 @@
       };
     }
     {
+      name = "fsevents";
+      path = fetchurl {
+        name = "fsevents@2.3.3";
+        url  = "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz";
+        hash = "sha256-x356XV/zHdes6nxE1KBFXgUozay9JKjLbIK2bSObWH4=";
+      };
+    }
+    {
       name = "get-east-asian-width";
       path = fetchurl {
         name = "get-east-asian-width@1.3.0";
         url  = "https://registry.npmjs.org/get-east-asian-width/-/get-east-asian-width-1.3.0.tgz";
         hash = "sha256-J8X/NjSphheq4dn4ZHIMT+jhzYyxNt4SMEDnTCsVxAw=";
+      };
+    }
+    {
+      name = "get-tsconfig";
+      path = fetchurl {
+        name = "get-tsconfig@4.10.0";
+        url  = "https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.10.0.tgz";
+        hash = "sha256-5HSx1mbar0Iu2IKqymm9eRS5X/ug9f9w8gPVOWc/U0M=";
       };
     }
     {
@@ -380,6 +612,14 @@
       };
     }
     {
+      name = "resolve-pkg-maps";
+      path = fetchurl {
+        name = "resolve-pkg-maps@1.0.0";
+        url  = "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz";
+        hash = "sha256-Sny9twVLHdbkZgZxKb6Vd7SV/2nQIGSRPhcjQF2w33Y=";
+      };
+    }
+    {
       name = "restore-cursor";
       path = fetchurl {
         name = "restore-cursor@4.0.0";
@@ -449,6 +689,14 @@
         name = "strip-ansi@7.1.0";
         url  = "https://registry.npmjs.org/strip-ansi/-/strip-ansi-7.1.0.tgz";
         hash = "sha256-lMSjCUaQVYsbBvVFG8OAGW0taEsolTdjNUIcFXqzk3E=";
+      };
+    }
+    {
+      name = "tsx";
+      path = fetchurl {
+        name = "tsx@4.19.3";
+        url  = "https://registry.npmjs.org/tsx/-/tsx-4.19.3.tgz";
+        hash = "sha256-DdiWh5KzxkRdJOqyl27HjIN55OQANOy4Uyy+4MtrP1A=";
       };
     }
     {
@@ -541,12 +789,15 @@
 
   # List of binary symlinks to create in the `node_modules/.bin` folder
   binaries = {
+    esbuild = "../esbuild/bin/esbuild";
+    ink-storybook = "../ink-storybook/dist/cli/index.js";
     is-docker = "../is-docker/cli.js";
     is-in-ci = "../is-in-ci/cli.js";
     is-inside-container = "../is-inside-container/cli.js";
     loose-envify = "../loose-envify/cli.js";
     tsc = "../typescript/bin/tsc";
     tsserver = "../typescript/bin/tsserver";
+    tsx = "../tsx/dist/cli.mjs";
   };
 
   # Link a binary from a package

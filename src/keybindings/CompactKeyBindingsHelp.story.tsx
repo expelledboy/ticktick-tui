@@ -1,68 +1,27 @@
-import React from "react";
-import { Box, Text, render } from "ink";
 import CompactKeyBindingsHelp from "./CompactKeyBindingsHelp";
+import type { StoryExport } from "@expelledboy/ink-storybook";
 
-/**
- * CompactKeyBindingsHelp Stories
- *
- * This file showcases the CompactKeyBindingsHelp component in different contexts
- * using border-wrapped stories.
- */
-
-// Story wrapper with border - matching KeyBindingsHelp.story.tsx
-const Story = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <Box flexDirection="column">
-    <Text bold underline color="yellow">
-      {title}
-    </Text>
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      borderColor="yellow"
-      width={120}
-      marginBottom={1}
-      paddingX={1}
-    >
-      {children}
-    </Box>
-  </Box>
-);
-
-// Main Stories component
-const Stories = () => {
-  return (
-    <Box flexDirection="column">
-      <Story title="All Keybindings ">
-        <CompactKeyBindingsHelp />
-      </Story>
-
-      <Story title="Single Context - Global">
-        <CompactKeyBindingsHelp contexts={["global"]} />
-      </Story>
-
-      <Story title="Tasks">
-        <CompactKeyBindingsHelp contexts={["tasks"]} />
-      </Story>
-
-      <Story title="Projects">
-        <CompactKeyBindingsHelp contexts={["projects"]} />
-      </Story>
-    </Box>
-  );
+const storyExport: StoryExport = {
+  stories: [
+    {
+      id: "all-keybindings",
+      title: "All Keybindings",
+      component: <CompactKeyBindingsHelp />,
+      description: "Shows all available keybindings across all contexts",
+    },
+    {
+      id: "global-context",
+      title: "Global Context",
+      component: <CompactKeyBindingsHelp contexts={["global"]} />,
+      description: "Shows only global keybindings",
+    },
+    {
+      id: "projects-context",
+      title: "Projects Context",
+      component: <CompactKeyBindingsHelp contexts={["projects"]} />,
+      description: "Shows keybindings specific to the projects context",
+    },
+  ],
 };
 
-/**
- * Run this file directly to view the stories:
- * bun run src/keybindings/CompactKeyBindingsHelp.story.tsx
- */
-if (require.main === module) {
-  render(<Stories />);
-}
-
-export default Stories;
+export default storyExport;

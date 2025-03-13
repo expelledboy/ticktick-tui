@@ -1,38 +1,14 @@
 import React, { useState } from "react";
-import { Box, Text, render } from "ink";
+import { Box, Text } from "ink";
 import FocusList from "./FocusList";
+import type { StoryExport } from "@expelledboy/ink-storybook";
 
 /**
  * FocusList Stories
  *
  * This file showcases the FocusList component in different scenarios
- * to demonstrate its flexibility and usage patterns.
+ * using ink-storybook to demonstrate its flexibility and usage patterns.
  */
-
-// Story wrapper with border
-const Story = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <Box flexDirection="column" marginBottom={2}>
-    <Text bold underline color="yellow">
-      {title}
-    </Text>
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      borderColor="yellow"
-      width={50}
-      marginBottom={1}
-      padding={1}
-    >
-      {children}
-    </Box>
-  </Box>
-);
 
 // Define the data type for our examples
 interface TodoItem {
@@ -119,39 +95,30 @@ const TodoListCustomHeader = () => (
   />
 );
 
-// Main Stories component
-const Stories = () => {
-  return (
-    <Box flexDirection="column">
-      <Story title="Basic Todo List with Selection">
-        <TodoList />
-      </Story>
-
-      <Story title="Empty List Example">
-        <EmptyList />
-      </Story>
-
-      <Story title="Custom Header & Styling">
-        <TodoListCustomHeader />
-      </Story>
-
-      <Text>
-        Note: Use arrow keys or j/k to navigate, and Enter to select items.
-      </Text>
-      <Text>
-        These stories will respond to your key presses via the keybinding
-        system.
-      </Text>
-    </Box>
-  );
+const storyExport: StoryExport = {
+  stories: [
+    {
+      id: "todo-list",
+      title: "Basic Todo List with Selection",
+      component: <TodoList />,
+      description:
+        "A todo list with focus and selection capabilities. Use arrow keys or j/k to navigate, and Enter to select items.",
+    },
+    {
+      id: "empty-list",
+      title: "Empty List Example",
+      component: <EmptyList />,
+      description:
+        "An empty list with a customized message when no items are available.",
+    },
+    {
+      id: "custom-header",
+      title: "Custom Header & Styling",
+      component: <TodoListCustomHeader />,
+      description:
+        "Demonstrates using a custom header and custom styling for list items.",
+    },
+  ],
 };
 
-/**
- * Run this file directly to view the stories:
- * bun run src/components/FocusList.story.tsx
- */
-if (require.main === module) {
-  render(<Stories />);
-}
-
-export default Stories;
+export default storyExport;

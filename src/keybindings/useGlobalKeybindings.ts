@@ -44,11 +44,9 @@ export const useGlobalKeybindings = () => {
 
     switch (activeView) {
       case "projects":
-        if (action === "right") setActiveView("project");
-        if (action === "left") setActiveView("project");
+        if (action === "right" && haveSelectedProject) setActiveView("project");
         break;
       case "project":
-        if (action === "right") setActiveView("projects");
         if (action === "left") setActiveView("projects");
         break;
     }
