@@ -118,6 +118,27 @@ const setValueByPath = (obj: any, path: string, value: any): void => {
 
 export const config = loadConfig();
 
+// Create relavent directories
+
+const configDir = config.storage.config.substring(
+  0,
+  config.storage.config.lastIndexOf("/")
+);
+const cacheDir = config.storage.cache.substring(
+  0,
+  config.storage.cache.lastIndexOf("/")
+);
+
+if (!fs.existsSync(configDir)) {
+  console.log("Creating config directory", configDir);
+  fs.mkdirSync(configDir, { recursive: true });
+}
+
+if (!fs.existsSync(cacheDir)) {
+  console.log("Creating cache directory", cacheDir);
+  fs.mkdirSync(cacheDir, { recursive: true });
+}
+
 // Declare the global type
 declare global {
   // Make settings available as a global variable

@@ -17,7 +17,6 @@ bun2nix.mkBunDerivation rec {
   buildPhase = ''
     runHook preBuild
     bun build \
-      --minify \
       --target=node \
       --splitting \
       --external react-devtools-core \

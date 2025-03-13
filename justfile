@@ -42,3 +42,19 @@ bun2nix:
 
 build: bun2nix
     nix build
+
+[private]
+local-build:
+    bun build \
+      --target=node \
+      --splitting \
+      --external react-devtools-core \
+      ./src/index.ts \
+      --outdir=./build
+    cp -r ./node_modules/yoga-wasm-web/dist/yoga.wasm ./build/yoga.wasm
+
+[private]
+local-run:
+    bun run ./build/index.js
+
+run: typecheck local-build local-run
