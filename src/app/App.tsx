@@ -60,9 +60,12 @@ const StatusBar = () => {
   const activeView = useAppStore((s) => s.activeView);
 
   return (
-    <Box justifyContent="space-between" gap={1}>
-      <CompactKeyBindingsHelp contexts={["global", "navigation"]} />
-      <CompactKeyBindingsHelp contexts={[activeView]} />
+    <Box justifyContent="space-between" alignItems="center">
+      <Box flexShrink={1} overflow="hidden">
+        <CompactKeyBindingsHelp
+          contexts={["global", "navigation", activeView]}
+        />
+      </Box>
     </Box>
   );
 };

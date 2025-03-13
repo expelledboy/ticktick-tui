@@ -1,5 +1,6 @@
 import type { StateCreator } from "zustand";
 import { type ViewMode } from "../core/types";
+import { DEV } from "../constants";
 
 type UIState = {
   // Viewing
@@ -43,7 +44,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   viewApp: true,
   debugMode: false,
   viewProjects: true,
-  viewLogs: true,
+  viewLogs: DEV ? true : false,
   viewHelp: false,
   stopViewingApp: () => set(() => ({ viewApp: false })),
   toggleDebugMode: () => set((s) => ({ debugMode: !s.debugMode })),

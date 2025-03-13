@@ -25,6 +25,9 @@ export const keylogger = (() => {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
+
+    // Clear the file between sessions
+    fs.writeFileSync(keyloggerFile, "", "utf-8");
   } catch (error) {
     // Silently fail
   }

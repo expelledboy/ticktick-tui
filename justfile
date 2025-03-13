@@ -13,7 +13,7 @@ bun-test *args:
 unit-test: (bun-test tests)
 
 e2e-test:
-    @ bun test \
+    @ export TICKTICK_DEBUG=true && bun test \
       --timeout 15000 \
       --bail \
       --preload ./src/ticktick/api.mock \

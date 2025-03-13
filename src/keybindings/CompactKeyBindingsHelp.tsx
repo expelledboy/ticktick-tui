@@ -113,13 +113,13 @@ function formatKeybindingPair(key: string, action: string): React.ReactNode {
   const formattedKey = formatKeyBinding(key).toLowerCase();
 
   return (
-    <Box>
+    <Text>
       <Text bold color="green">
         {formattedKey}
       </Text>
       <Text>:</Text>
       <Text>{actionName}</Text>
-    </Box>
+    </Text>
   );
 }
 
@@ -161,7 +161,7 @@ const CompactKeyBindingsHelp: React.FC<CompactKeyBindingsHelpProps> = ({
   }, [allKeybindings, contextsToShow]);
 
   return (
-    <Box flexDirection="row" flexWrap="wrap">
+    <Box flexDirection="row" flexWrap="wrap" overflow="hidden">
       {items}
     </Box>
   );

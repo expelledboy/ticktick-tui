@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { parseArgs } from "node:util";
 import { AppSettingsSchema, type AppSettings } from "./types";
 import { debug, logError } from "./logger";
+import { DEV } from "../constants";
 
 const defaultConfigPath = "~/.config/ticktick-tui/config.json";
 

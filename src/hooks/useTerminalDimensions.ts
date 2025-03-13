@@ -11,8 +11,8 @@ export const useTerminalDimensions = () => {
   const throttleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [dimensions, setDimensions] = useState({
-    width: stdout.columns || 80,
-    height: stdout.rows || 24,
+    width: stdout.columns || 100,
+    height: stdout.rows || 40,
   });
 
   useEffect(() => {

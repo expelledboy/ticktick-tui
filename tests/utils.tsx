@@ -126,8 +126,9 @@ export async function waitForText(
  * Wait for a condition to be true
  */
 export async function waitForCondition(
+  timeout = 3000,
   condition: () => boolean,
-  timeout = 3000
+  errorContext?: string
 ): Promise<void> {
   const startTime = Date.now();
 
@@ -140,7 +141,10 @@ export async function waitForCondition(
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
-  const error = new Error(`Timeout: Condition not met within ${timeout}ms`);
+  const error = new Error(
+    `Timeout: Condition not met within ${timeout}ms` +
+      (errorContext ? `\nContext: ${errorContext}` : "")
+  );
   throw enhanceError(error, waitForCondition);
 }
 
@@ -184,14 +188,18 @@ export const press = async (
   stdin.write(keyMap[key] || key);
 
   // Wait for key processing to complete by observing logs
-  await waitForCondition(() => {
-    const currentLogs = getInMemoryLogs();
-    // Look for new log entries indicating key processing
-    return (
-      currentLogs.length > initialLogCount &&
-      currentLogs.some((log) => log.op.includes("KEYBINDING_TRIGGERED"))
-    );
-  }, 1000);
+  await waitForCondition(
+    1000,
+    () => {
+      const currentLogs = getInMemoryLogs();
+      // Look for new log entries indicating key processing
+      return (
+        currentLogs.length > initialLogCount &&
+        currentLogs.some((log) => log.op.includes("KEYBINDING_TRIGGERED"))
+      );
+    },
+    `Key press: ${key}`
+  );
 
   // Wait for react to render
   await new Promise((resolve) => setTimeout(resolve, 1));
@@ -241,10 +249,14 @@ export async function waitForQueryStatus(
   status: "error" | "success" | "loading",
   timeout = 3000
 ): Promise<void> {
-  return waitForCondition(() => {
-    const state = queryClient.getQueryState(queryKey);
-    return state?.status === status;
-  }, timeout);
+  return waitForCondition(
+    timeout,
+    () => {
+      const state = queryClient.getQueryState(queryKey);
+      return state?.status === status;
+    },
+    `Query status: ${status}`
+  );
 }
 
 /**
