@@ -143,7 +143,8 @@ describe("ProjectList", () => {
 
       // Check for error in UI
       const output = helper.lastFrame();
-      expect(output).toContain(`Error: ${errorMessage}`);
+      expect(output).toContain("Error"); // Check for Error header
+      expect(output).toContain(errorMessage); // Check for error message content
     } finally {
       // Restore the original implementation
       mockState.getAllProjects = originalGetAllProjects;

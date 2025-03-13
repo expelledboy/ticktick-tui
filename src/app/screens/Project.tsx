@@ -84,7 +84,10 @@ export default function Project() {
       );
 
       return (
-        <Text color={isSelected ? "green" : undefined} bold={isFocused}>
+        <Text
+          color={isSelected ? "green" : undefined}
+          bold={isFocused && inFocus}
+        >
           {isFocused ? "› " : "  "}
           {status}
           {task.title.trim()}
@@ -105,27 +108,69 @@ export default function Project() {
     </Box>
   );
 
-  return (
-    <Box>
-      {isLoading ? (
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box padding={1}>
         <Text>Loading...</Text>
-      ) : error ? (
-        <Text>Error: {error.message}</Text>
-      ) : !projectData ? (
-        <Text>No project selected</Text>
-      ) : (
-        <FocusList<Task>
-          mode="project"
-          renderHeader={Header}
-          items={sortedTasks}
-          selectedId={selectedTaskId}
-          onSelect={handleSelectTask}
-          getItemId={(task) => task.id}
-          emptyMessage="No tasks found"
-          renderItem={renderTaskItem}
-        />
-      )}
+      </Box>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Box marginBottom={1}>
+          <Text bold color="red">
+            Error
+          </Text>
+        </Box>
+        <Text>{error.message}</Text>
+      </Box>
+    );
+  }
+
+  // No project selected state
+  if (!projectData) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Box marginBottom={1}>
+          <Text bold color="gray">
+            No project selected
+          </Text>
+        </Box>
+        <Text dimColor>Select a project from the list to view tasks</Text>
+      </Box>
+    );
+  }
+
+  // Custom empty renderer for when project has no tasks
+  const renderEmpty = () => (
+    <Box flexDirection="column" padding={1}>
+      <Box marginBottom={1}>
+        <Text bold color="gray">
+          No tasks found
+        </Text>
+      </Box>
+      <Text dimColor>
+        This project has no tasks. Create a new task to get started.
+      </Text>
     </Box>
+  );
+
+  // Project with tasks
+  return (
+    <FocusList<Task>
+      mode="project"
+      renderHeader={Header}
+      items={sortedTasks}
+      selectedId={selectedTaskId}
+      onSelect={handleSelectTask}
+      getItemId={(task) => task.id}
+      renderEmpty={renderEmpty}
+      renderItem={renderTaskItem}
+    />
   );
 }
 

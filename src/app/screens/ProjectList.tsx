@@ -24,6 +24,7 @@ const sortProjects = (projects: Project[]) => {
 export const ProjectList = () => {
   const { data: projects, isLoading, error } = useProjects();
   const selectedProjectId = useAppStore((s) => s.selectedProjectId);
+  const inFocus = useAppStore((s) => s.activeView === "projects");
 
   useDebugLogs("ProjectList");
 
@@ -47,43 +48,74 @@ export const ProjectList = () => {
     [selectedProjectId]
   );
 
-  // Use a single return with conditional rendering instead of early returns
-  return (
-    <Box>
-      {isLoading ? (
-        // Render loading state
+  const renderProjectItem = useCallback(
+    ({ item: project, isFocused, isSelected }: RenderItemProps<Project>) => {
+      return (
+        <Box>
+          <Text
+            color={isSelected ? "green" : undefined}
+            bold={isFocused && inFocus}
+          >
+            {isFocused ? "› " : "  "} {project.name}
+          </Text>
+        </Box>
+      );
+    },
+    [inFocus]
+  );
+
+  // Custom empty renderer for consistent styling with other components
+  const renderEmpty = useCallback(() => {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Box marginBottom={1}>
+          <Text bold color="gray">
+            No projects found
+          </Text>
+        </Box>
+        <Text dimColor>
+          No projects available. Create a new project to get started.
+        </Text>
+      </Box>
+    );
+  }, []);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Box padding={1}>
         <Text>Loading projects...</Text>
-      ) : error ? (
-        // Render error state
-        // TODO: Globally handle errors into status bar
-        <Text color="red">Error: {error.message}</Text>
-      ) : (
-        // Render the projects list with memoized sorted projects
-        <FocusList<Project>
-          mode="projects"
-          title="Projects"
-          items={sortedProjects}
-          selectedId={selectedProjectId}
-          onSelect={handleSelectProject}
-          emptyMessage="No projects found"
-          getItemId={(project) => project.id}
-          renderItem={ProjectItem}
-        />
-      )}
-    </Box>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Box marginBottom={1}>
+          <Text bold color="red">
+            Error
+          </Text>
+        </Box>
+        <Text>{error.message}</Text>
+      </Box>
+    );
+  }
+
+  // Render the projects list with memoized sorted projects
+  return (
+    <FocusList<Project>
+      mode="projects"
+      title="Projects"
+      items={sortedProjects}
+      selectedId={selectedProjectId}
+      onSelect={handleSelectProject}
+      renderEmpty={renderEmpty}
+      getItemId={(project) => project.id}
+      renderItem={renderProjectItem}
+    />
   );
 };
-
-const ProjectItem = ({
-  item: project,
-  isFocused,
-  isSelected,
-}: RenderItemProps<Project>) => (
-  <Box>
-    <Text color={isSelected ? "green" : undefined} bold={isFocused}>
-      {isFocused ? "› " : "  "} {project.name}
-    </Text>
-  </Box>
-);
 
 export default ProjectList;
