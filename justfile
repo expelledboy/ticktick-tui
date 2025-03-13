@@ -4,7 +4,7 @@ set shell := ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
 
 tests := `fd -0 --exclude zap --exclude tests .test.ts | tr '\0' ' '`
 
-test: unit-test e2e-test
+test: typecheck unit-test e2e-test
 
 [private]
 bun-test *args:
@@ -12,7 +12,7 @@ bun-test *args:
 
 unit-test: (bun-test tests)
 
-e2e-test: typecheck
+e2e-test:
     @ bun test \
       --timeout 15000 \
       --bail \

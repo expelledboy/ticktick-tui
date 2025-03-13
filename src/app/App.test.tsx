@@ -12,30 +12,31 @@ describe("App", () => {
 
   beforeEach(async () => {
     // Reset mocks and app state before each test
-    setupTestData();
+    const aProject = { id: "project-1", name: "MyProject" };
+    setupTestData([aProject]);
     useAppStore.getState().reset();
     app = createTestHelper(<App />);
     await app.waitForQueryStatus(["projects"], "success");
   });
 
   test("renders the app", async () => {
-    expect(app.lastFrame()).toContain("Projects");
+    expect(app.lastFrame()).toContain("MyProject");
   });
 
   test("toggle projects panel", async () => {
-    app.press("ctrl_p");
-    expect(app.lastFrame()).not.toContain("Projects");
+    await app.press("ctrl_p");
+    expect(app.lastFrame()).not.toContain("MyProject");
   });
 
   // TODO: When we disable logs by default this will fail
   test("toggle logs panel", async () => {
-    app.press("ctrl_l");
+    await app.press("ctrl_l");
 
     await app.waitForCondition(200, () => !app.lastFrame().includes("Logs"));
   });
 
   test("toggle debug panel", async () => {
-    app.press("ctrl_d");
+    await app.press("ctrl_d");
 
     await app.waitForCondition(500, () =>
       app.lastFrame().includes("Debug (Developer Tool)")
@@ -43,7 +44,7 @@ describe("App", () => {
   });
 
   test("toggle help panel", async () => {
-    app.press("?");
+    await app.press("?");
 
     await app.waitForCondition(500, () =>
       app.lastFrame().includes("NAVIGATION")
@@ -51,7 +52,7 @@ describe("App", () => {
   });
 
   test("quit application", async () => {
-    app.press("q");
+    await app.press("q");
 
     await app.waitForCondition(200, () => app.lastFrame().includes(byeMsg));
   });

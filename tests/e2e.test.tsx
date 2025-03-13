@@ -38,13 +38,13 @@ describe("Project and Task Management E2E", () => {
           id: "task-1",
           title: "Task 1",
           projectId: "project-1",
-          sortOrder: 1,
+          sortOrder: 2,
         },
         {
           id: "task-2",
           title: "Task 2",
           projectId: "project-1",
-          sortOrder: 2,
+          sortOrder: 1,
         },
       ]
     );
@@ -94,7 +94,7 @@ describe("Project and Task Management E2E", () => {
       });
   });
 
-  test.skip("can select a project", async () => {
+  test("can select a project", async () => {
     await app.user
       .does(
         "selects project 1",
@@ -120,21 +120,21 @@ describe("Project and Task Management E2E", () => {
       });
   });
 
-  test.skip("can scroll through tasks (without affecting project list)", async () => {
+  test("can scroll through tasks (without affecting project list)", async () => {
     await app.user
       .does(
         "scrolls through tasks",
         (async () => {
           await app.press("down");
           // Wait for UI to update to show the focused task
-          await app.waitForText("›  Task 2");
+          await app.waitForText("› ☐ Task 2");
         })()
       )
       .sees(() => {
         // Should show current project
         app.ui.contains("›  Project 1");
         // Task 2 should be focused
-        app.ui.contains("›  Task 2");
+        app.ui.contains("› ☐ Task 2");
         app.logs.contains("KEYBINDING_TRIGGERED", { action: /down/ });
       });
   });

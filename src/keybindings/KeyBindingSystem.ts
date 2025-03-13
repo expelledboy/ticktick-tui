@@ -239,11 +239,10 @@ export function isBindingActiveInContext(
   }
 
   // Case 2: View category bindings (projects, project, task)
-  // are active in two cases:
-  // 1. When mode matches the category exactly
-  // 2. When activeView matches the category (for view-specific actions)
+  // are active ONLY when BOTH mode AND activeView match the category exactly
   if (viewModes.includes(category as ViewMode)) {
-    return mode === category || activeView === category;
+    // This is the critical change: require BOTH mode AND activeView to match
+    return mode === category && activeView === category;
   }
 
   // Case 3: Non-view categories (navigation, ui, etc.)

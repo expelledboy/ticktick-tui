@@ -82,9 +82,13 @@ export const useKeyHandler = (mode: AppMode, onAction: ActionHandler) => {
         activeView,
       };
 
+      // Only process input if the mode matches the activeView, or it's a global binding
+      // This ensures that key bindings are only processed by the currently focused view
+      const modeMatchesActiveView = mode === activeView || mode === "global";
+
       // Handle direct navigation keys first (for backward compatibility)
       const navigationAction = isNavigationAction(key);
-      if (navigationAction) {
+      if (navigationAction && modeMatchesActiveView) {
         // Prevent duplicate rapid keypresses (especially important for navigation)
         const now = Date.now();
         if (
@@ -124,7 +128,7 @@ export const useKeyHandler = (mode: AppMode, onAction: ActionHandler) => {
         context
       );
 
-      if (matchedBinding) {
+      if (matchedBinding && modeMatchesActiveView) {
         onAction(matchedBinding.action.category, matchedBinding.action.action);
       }
     },

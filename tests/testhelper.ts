@@ -296,7 +296,7 @@ export function createTestHelper(uiComponent: React.ReactElement) {
     waitForCondition,
     waitForQueryStatus,
     waitForLogOperation,
-    press: (key: string) => press(result.stdin, key),
+    press: async (key: string) => await press(result.stdin, key),
     type: (text: string) => typeText(result.stdin, text),
     unmount: result.unmount,
     frames: result.frames,

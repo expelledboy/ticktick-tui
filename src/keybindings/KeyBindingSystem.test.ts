@@ -164,11 +164,11 @@ describe("KeyBindingSystem", () => {
       ).toBe(false);
     });
 
-    test("view category bindings are active when either mode or view match the category", () => {
+    test("view category bindings are only active when both mode and activeView match the category", () => {
       // Projects binding (a view category)
       const projectsBinding = createKeyBinding("projects", "new", "n");
 
-      // Test with exact matches
+      // Test with exact matches - should be active
       const exactContext: KeyContext = {
         mode: "projects",
         activeView: "projects",
@@ -177,26 +177,69 @@ describe("KeyBindingSystem", () => {
         true
       );
 
-      // Test in mismatched context but with activeView matching category
+      // Test in mismatched context but with mode matching category - should be inactive
       const mismatchContext: KeyContext = {
         mode: "projects",
         activeView: "project",
       };
-      // Now this should be true because either mode or activeView can match
       expect(isBindingActiveInContext(projectsBinding, mismatchContext)).toBe(
-        true
+        false
       );
 
-      // Test with mode matching but activeView not matching
+      // Test with activeView matching but mode not matching - should be inactive
       const modeMismatchContext: KeyContext = {
         mode: "global",
         activeView: "projects",
       };
       expect(
         isBindingActiveInContext(projectsBinding, modeMismatchContext)
-      ).toBe(true);
+      ).toBe(false);
 
-      // Test with neither matching
+      // Test with neither matching - should be inactive
+      const noMatchContext: KeyContext = {
+        mode: "global",
+        activeView: "project",
+      };
+      expect(isBindingActiveInContext(projectsBinding, noMatchContext)).toBe(
+        false
+      );
+    });
+
+    // NEW TEST - View bindings should only be active when mode matches activeView
+    test("view category bindings should only be active when mode matches activeView", () => {
+      // Projects binding (a view category)
+      const projectsBinding = createKeyBinding("projects", "new", "n");
+
+      // 1. When mode and activeView both match the category - should be active
+      const matchingContext: KeyContext = {
+        mode: "projects",
+        activeView: "projects",
+      };
+      expect(isBindingActiveInContext(projectsBinding, matchingContext)).toBe(
+        true
+      );
+
+      // 2. When mode matches but activeView does not - should NOT be active
+      const modeOnlyContext: KeyContext = {
+        mode: "projects",
+        activeView: "project", // Different from mode
+      };
+      // This currently returns true but should return false
+      expect(isBindingActiveInContext(projectsBinding, modeOnlyContext)).toBe(
+        false
+      );
+
+      // 3. When activeView matches but mode does not - should NOT be active
+      const viewOnlyContext: KeyContext = {
+        mode: "project", // Different from category
+        activeView: "projects",
+      };
+      // This currently returns true but should return false
+      expect(isBindingActiveInContext(projectsBinding, viewOnlyContext)).toBe(
+        false
+      );
+
+      // 4. When neither match - should NOT be active
       const noMatchContext: KeyContext = {
         mode: "global",
         activeView: "project",
@@ -269,20 +312,25 @@ describe("KeyBindingSystem", () => {
     });
 
     test("assigns ModifierKey priority to bindings with modifier keys", () => {
-      // Create a binding with a modifier key
-      const modifierBinding = createKeyBinding("ui", "toggleDebug", "ctrl+d");
-      // Create a binding without a modifier key
-      const regularBinding = createKeyBinding("projects", "deleteProject", "d");
+      // Create binding with modifier keys
+      const modifierBinding = createKeyBinding("projects", "new", "ctrl+n");
 
-      const context: KeyContext = { mode: "global", activeView: "projects" };
+      // Context where the binding is active (both mode and activeView match)
+      const projectsContext: KeyContext = {
+        mode: "projects",
+        activeView: "projects",
+      };
 
-      // The binding with a modifier should have higher priority (ModifierKey)
-      expect(getBindingPriority(modifierBinding, context)).toBe(
+      // Modifier keys should have highest priority
+      expect(getBindingPriority(modifierBinding, projectsContext)).toBe(
         BindingPriority.ModifierKey
       );
 
-      // The regular binding should have a lower priority
-      expect(getBindingPriority(regularBinding, context)).toBe(
+      // For comparison, create a non-modifier binding in the same category
+      const regularBinding = createKeyBinding("projects", "view", "v");
+
+      // Regular binding should have ExactModeMatch priority
+      expect(getBindingPriority(regularBinding, projectsContext)).toBe(
         BindingPriority.ExactModeMatch
       );
     });
@@ -353,42 +401,43 @@ describe("KeyBindingSystem", () => {
     });
 
     test("handles complex scenarios with multiple matching bindings", () => {
+      // Create a diverse set of bindings
       const bindings = [
-        createKeyBinding("global", "cancel", "q"),
-        createKeyBinding("projects", "newProject", "n"),
-        createKeyBinding("project", "newTask", "n"),
+        createKeyBinding("global", "quit", "q"),
+        createKeyBinding("projects", "new", "n"),
+        createKeyBinding("project", "delete", "n"), // Same key as projects.new
+        createKeyBinding("global", "help", "?"),
       ];
 
-      const input = createRawInput("n");
+      const nInput = createRawInput("n");
 
-      // In an exact match context, the view-specific binding should win
-      const exactMatchContext: KeyContext = {
+      // Test in projects context - with both mode and activeView = "projects"
+      const projectsContext: KeyContext = {
         mode: "projects",
         activeView: "projects",
       };
 
-      const result1 = findMatchingBinding(bindings, input, exactMatchContext);
+      // Should match the projects.new binding
+      const result1 = findMatchingBinding(bindings, nInput, projectsContext);
       expect(result1?.action.category).toBe("projects");
-      expect(result1?.action.action).toBe("newProject");
+      expect(result1?.action.action).toBe("new");
 
-      // In a global context but with activeView=projects, the projects binding should win due to our new priority rule
-      const globalContext: KeyContext = {
-        mode: "global",
-        activeView: "projects",
+      // Test in project context - with both mode and activeView = "project"
+      const projectContext: KeyContext = {
+        mode: "project",
+        activeView: "project",
       };
 
-      const result2 = findMatchingBinding(bindings, input, globalContext);
-      expect(result2?.action.category).toBe("projects");
-      expect(result2?.action.action).toBe("newProject");
+      // Should match the project.delete binding
+      const result2 = findMatchingBinding(bindings, nInput, projectContext);
+      expect(result2?.action.category).toBe("project");
+      expect(result2?.action.action).toBe("delete");
 
-      // In a completely different context, no binding should match
-      const noMatchContext: KeyContext = {
-        mode: "global",
-        activeView: "task",
-      };
-
-      const result3 = findMatchingBinding(bindings, input, noMatchContext);
-      expect(result3).toBeNull();
+      // Global input should match in any context
+      const qInput = createRawInput("q");
+      const result3 = findMatchingBinding(bindings, qInput, projectContext);
+      expect(result3?.action.category).toBe("global");
+      expect(result3?.action.action).toBe("quit");
     });
   });
 
