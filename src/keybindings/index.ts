@@ -22,6 +22,9 @@ export {
   matchesInput,
 } from "./KeyBindingSystem";
 
+// Keybinding modes
+export type { AppMode } from "./useKeyHandler";
+
 // Config exports
 import { z } from "zod";
 import { keybindingsSchema } from "./schema";

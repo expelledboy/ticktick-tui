@@ -41,9 +41,17 @@ const TodoList = () => {
       items={todos}
       mode="global"
       selectedId={selectedId}
-      onSelect={(todo) => setSelectedId(todo?.id ?? null)}
+      onSelect={(todo: TodoItem | null) => setSelectedId(todo?.id ?? null)}
       title="Todo Items"
-      renderItem={({ item, isFocused, isSelected }) => (
+      renderItem={({
+        item,
+        isFocused,
+        isSelected,
+      }: {
+        item: TodoItem;
+        isFocused: boolean;
+        isSelected: boolean;
+      }) => (
         <Text
           backgroundColor={isFocused ? "blue" : undefined}
           color={isFocused ? "white" : undefined}
@@ -65,7 +73,7 @@ const EmptyList = () => (
     mode="global"
     title="Empty List"
     emptyMessage="Nothing to see here!"
-    renderItem={({ item }) => <Text>{item.title}</Text>}
+    renderItem={({ item }: { item: TodoItem }) => <Text>{item.title}</Text>}
   />
 );
 
@@ -75,7 +83,13 @@ const TodoListCustomHeader = () => (
     items={moreTodos}
     mode="global"
     title="More Tasks"
-    renderItem={({ item, isFocused }) => (
+    renderItem={({
+      item,
+      isFocused,
+    }: {
+      item: TodoItem;
+      isFocused: boolean;
+    }) => (
       <Box>
         <Text
           backgroundColor={isFocused ? "green" : undefined}
@@ -99,7 +113,7 @@ const storyExport: StoryExport = {
   stories: [
     {
       id: "todo-list",
-      title: "Basic Todo List with Selection",
+      title: "Basic",
       component: <TodoList />,
       description:
         "A todo list with focus and selection capabilities. Use arrow keys or j/k to navigate, and Enter to select items.",
@@ -113,7 +127,7 @@ const storyExport: StoryExport = {
     },
     {
       id: "custom-header",
-      title: "Custom Header & Styling",
+      title: "Custom Styling",
       component: <TodoListCustomHeader />,
       description:
         "Demonstrates using a custom header and custom styling for list items.",

@@ -55,8 +55,8 @@ const sortTasksByDueDate = (tasks: Task[]) => {
       return dueDateA.getTime() - dueDateB.getTime();
     } catch (e) {
       logError("INVALID_DATA", {
-        dueDateA,
-        dueDateB,
+        dueDateA: dueDateA.toISOString(),
+        dueDateB: dueDateB.toISOString(),
         dueDateAIsDate: dueDateA instanceof Date,
         dueDateBIsDate: dueDateB instanceof Date,
         message: "dueDate is not a date",

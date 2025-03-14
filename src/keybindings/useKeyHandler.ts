@@ -3,21 +3,25 @@ import { useCallback, useRef } from "react";
 import { useAppStore } from "../store";
 import { type ViewMode } from "../core/types";
 import {
+  formatRawInput,
   findMatchingBinding,
   configToBindings,
   type KeyContext,
   type RawInput,
   type Action,
+  parseInput,
 } from "./KeyBindingSystem";
 import { getAllKeybindings } from "./config";
+import { debug, logToInMemory } from "../core/logger";
+import { TEST } from "../constants";
 
 export type AppMode = "global" | ViewMode;
 export type ActionHandler = (category: string, action: string) => void;
 
 /**
- * Handle navigation keys directly - for backward compatibility
+ * Handle native keys directly
  */
-export function isNavigationAction(key: Key) {
+export function isNativeKey(key: Key) {
   const navigationActions: Partial<Record<keyof Key, Action>> = {
     upArrow: "up",
     downArrow: "down",
@@ -41,25 +45,6 @@ export function isNavigationAction(key: Key) {
 const cachedBindings = configToBindings(getAllKeybindings() as any);
 
 /**
- * Simple debounce function to prevent multiple rapid keypresses
- */
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-
-  return function (...args: Parameters<T>) {
-    if (timeout) {
-      return;
-    }
-
-    func(...args);
-
-    timeout = setTimeout(() => {
-      timeout = null;
-    }, wait);
-  };
-}
-
-/**
  * Unified key handler with explicit mode handling and priority-based binding resolution
  *
  * @param mode The current app mode (global, projects, project, task)
@@ -67,6 +52,7 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
  */
 export const useKeyHandler = (mode: AppMode, onAction: ActionHandler) => {
   const activeView = useAppStore((s) => s.activeView);
+
   // Create a ref to track the last input time
   const lastActionRef = useRef<{
     category: string;
@@ -82,44 +68,22 @@ export const useKeyHandler = (mode: AppMode, onAction: ActionHandler) => {
         activeView,
       };
 
-      // Only process input if the mode matches the activeView, or it's a global binding
-      // This ensures that key bindings are only processed by the currently focused view
-      const modeMatchesActiveView = mode === activeView || mode === "global";
-
-      // Handle direct navigation keys first (for backward compatibility)
-      const navigationAction = isNavigationAction(key);
-      if (navigationAction && modeMatchesActiveView) {
-        // Prevent duplicate rapid keypresses (especially important for navigation)
-        const now = Date.now();
-        if (
-          lastActionRef.current &&
-          lastActionRef.current.category === "navigation" &&
-          lastActionRef.current.action === navigationAction &&
-          now - lastActionRef.current.time < 100 // 100ms debounce
-        ) {
-          return;
-        }
-
-        // Update last action reference
-        lastActionRef.current = {
-          category: "navigation",
-          action: navigationAction,
-          time: now,
-        };
-
-        onAction("navigation", navigationAction);
-        return;
-      }
+      // Keylogging
+      logToInMemory("KEY_PRESSED", {
+        mode,
+        key: formatRawInput(parseInput(input, key)),
+      });
 
       // Create a raw input object for the KeyBindingSystem
-      const rawInput: RawInput = {
-        input,
-        key: {
-          ...key,
-          // Detect space key from the input string since key.raw may not exist
-          space: input === " " || false,
-        },
-      };
+      // TODO: Refactor KeyBindingSystem to use Key directly
+      const rawInput: RawInput = parseInput(input, key);
+
+      // Handle direct navigation keys first (for backward compatibility)
+      const nativeKey = isNativeKey(key);
+      if (nativeKey) {
+        onAction("navigation", nativeKey);
+        return;
+      }
 
       // Use our new KeyBindingSystem to find the best matching binding
       const matchedBinding = findMatchingBinding(
@@ -128,7 +92,21 @@ export const useKeyHandler = (mode: AppMode, onAction: ActionHandler) => {
         context
       );
 
-      if (matchedBinding && modeMatchesActiveView) {
+      debug("DEV", {
+        matchedBinding: matchedBinding?.action.action || "none",
+        mode,
+        activeView,
+      });
+
+      if (matchedBinding) {
+        // Log the triggered action
+        logToInMemory("KEYBINDING_TRIGGERED", {
+          category: matchedBinding.action.category,
+          action: matchedBinding.action.action,
+          key: formatRawInput(rawInput),
+          mode,
+        });
+
         onAction(matchedBinding.action.category, matchedBinding.action.action);
       }
     },

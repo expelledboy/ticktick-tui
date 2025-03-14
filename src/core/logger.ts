@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import { config } from "./config";
 import { dirname } from "node:path";
 import { useAppStore } from "../store"; // Import the store
-import { DEV } from "../constants";
+import { TEST } from "../constants";
 
 // Cache for the log file path and directory
 let logFileCache: string | null = null;
@@ -27,6 +27,9 @@ const getLogFile = (): string => {
 
 // Type for log levels, must match the type in store.ts
 export type LogLevel = "INFO" | "DEBUG" | "ERROR";
+
+// Type for log data
+export type LogData = Record<string, string | number | boolean>;
 
 // Type for log operations
 export type LogOperation =
@@ -77,13 +80,11 @@ export type LogOperation =
   | "FORM_FIELD_CHANGED"
   | "FORM_VALIDATION_ERROR"
   | "FORM_NAVIGATION"
-  // View management
-  | "VIEW_CHANGED"
-  | "VIEW_RENDERED"
-  | "VIEW_ERROR"
   // Component lifecycle
-  | "COMPONENT_MOUNTED"
-  | "COMPONENT_UNMOUNTED"
+  | "VIEW_MOUNTED"
+  | "VIEW_UNMOUNTED"
+  | "VIEW_RENDERED"
+  | "VIEW_CHANGED"
   // Data mutations
   | "MUTATION_STARTED"
   | "MUTATION_SUCCEEDED"
@@ -99,10 +100,7 @@ export type LogOperation =
  * @param data Object containing key-value pairs to log
  * @returns Formatted log string
  */
-const formatLogData = (
-  operation: LogOperation,
-  data: Record<string, any> = {}
-): string => {
+const formatLogData = (operation: LogOperation, data: LogData = {}): string => {
   // Convert data object to key=value pairs
   const pairs = Object.entries(data)
     .map(([key, value]) => {
@@ -141,7 +139,7 @@ const logToFile = (level: LogLevel, message: string): void => {
 
 type InMemoryLog = {
   op: LogOperation;
-  data: Record<string, any>;
+  data: LogData;
 };
 
 /**
@@ -162,17 +160,24 @@ export const clearInMemoryLogs = (): void => {
 export const getInMemoryLogs = (): InMemoryLog[] => IN_MEMORY_LOGS;
 
 /**
+ * Log only to in memory logs
+ */
+export const logToInMemory = (
+  operation: LogOperation,
+  data: LogData = {}
+): void => {
+  if (TEST) IN_MEMORY_LOGS.push({ op: operation, data });
+};
+
+/**
  * Log a debug message - only to in app logs
  * @param operation The operation being performed
  * @param data Key-value pairs to include in the log
  */
-export const debug = (
-  operation: LogOperation,
-  data: Record<string, any> = {}
-): void => {
+export const debug = (operation: LogOperation, data: LogData = {}): void => {
   const message = formatLogData(operation, data);
 
-  if (DEV) IN_MEMORY_LOGS.push({ op: operation, data });
+  if (TEST) IN_MEMORY_LOGS.push({ op: operation, data });
 
   // DEBUG logs are not written to file
   updateStoreLog("DEBUG", message);
@@ -183,10 +188,7 @@ export const debug = (
  * @param operation The operation being performed
  * @param data Key-value pairs to include in the log
  */
-export const info = (
-  operation: LogOperation,
-  data: Record<string, any> = {}
-): void => {
+export const info = (operation: LogOperation, data: LogData = {}): void => {
   const message = formatLogData(operation, data);
 
   logToFile("INFO", message);
@@ -198,10 +200,7 @@ export const info = (
  * @param operation The operation being performed
  * @param data Key-value pairs to include in the log
  */
-export const logError = (
-  operation: LogOperation,
-  data: Record<string, any> = {}
-): void => {
+export const logError = (operation: LogOperation, data: LogData = {}): void => {
   const message = formatLogData(operation, data);
 
   console.error("ERROR", message);

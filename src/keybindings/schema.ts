@@ -21,6 +21,7 @@ export const keybindingsSchema = z.object({
         right: z.string().default("l").describe("Navigate right"),
         select: z.string().default("space").describe("Select an item"),
         back: z.string().default("escape").describe("Go back"),
+        return: z.string().default("return").describe("Return"),
     }).default({}),
 
     projects: z.object({

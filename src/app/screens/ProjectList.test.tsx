@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "bun:test";
 import { ProjectList } from "./ProjectList";
-import { setupTestData, press } from "../../../tests/utils";
-import { createTestHelper } from "../../../tests/testhelper";
+import { setupTestData } from "../../../tests/utils";
+import { createTestHelper, waitForCondition } from "../../../tests/testhelper";
 import { useAppStore } from "../../store";
 import { mockState } from "../../ticktick/api.mock";
 import { mock } from "bun:test";
@@ -15,14 +15,13 @@ describe("ProjectList", () => {
 
   test("renders empty state when no projects exist", async () => {
     // Render the component with empty data
-    const helper = createTestHelper(<ProjectList />);
+    const app = createTestHelper(<ProjectList />);
 
     // Wait for the initial render
-    await helper.waitForText("No projects found");
+    await app.ui.viewRendered("ProjectList");
 
     // Verify the empty state message
-    const frame = helper.lastFrame();
-    expect(frame).toContain("No projects found");
+    await waitForCondition(() => app.lastFrame().includes("No projects found"));
   });
 
   test("displays projects sorted by sortOrder", async () => {
@@ -34,18 +33,18 @@ describe("ProjectList", () => {
     ]);
 
     // Render the component
-    const helper = createTestHelper(<ProjectList />);
+    const app = createTestHelper(<ProjectList />);
 
     // Wait for data to load
-    await helper.waitForText("Project A");
+    await waitForCondition(() => app.lastFrame().includes("Project A"));
 
     // Get the final rendered output
-    const output = helper.lastFrame();
+    const frame = app.ui.createSnapshot();
 
     // Check that projects are ordered correctly
-    const projectAIndex = output.indexOf("Project A");
-    const projectBIndex = output.indexOf("Project B");
-    const projectCIndex = output.indexOf("Project C");
+    const projectAIndex = frame.indexOf("Project A");
+    const projectBIndex = frame.indexOf("Project B");
+    const projectCIndex = frame.indexOf("Project C");
 
     expect(projectAIndex).toBeGreaterThan(-1);
     expect(projectBIndex).toBeGreaterThan(-1);
@@ -65,50 +64,46 @@ describe("ProjectList", () => {
     ]);
 
     // Render the component
-    const helper = createTestHelper(<ProjectList />);
+    const app = createTestHelper(<ProjectList />);
 
     // Wait for data to load
-    await helper.waitForText("Project 1");
+    await waitForCondition(() => app.lastFrame().includes("Project 1"));
 
     // Initially, the first project should be selected
-    const initialOutput = helper.lastFrame();
-    expect(initialOutput).toContain("›  Project 1");
+    const frame1 = app.ui.createSnapshot();
+    expect(frame1).toContain("›  Project 1");
 
     // Press down to move to the second project
-    press(helper.stdin, "down");
+    await app.press("down");
 
     console.log("activeView", useAppStore.getState().activeView);
 
     // Wait for the UI to update with enhanced error context
-    await helper.waitForCondition(
-      3000,
-      () => helper.lastFrame().includes("›  Project 2"),
-      "Expected down key press to select the second project"
-    );
+    await waitForCondition(() => app.lastFrame().includes("›  Project 2"));
 
     // Verify second project is now selected
-    const finalOutput = helper.lastFrame();
-    expect(finalOutput).toContain("›  Project 2");
+    const frame2 = app.ui.createSnapshot();
+    expect(frame2).toContain("›  Project 2");
   });
 
   test("displays loading state before data is available", async () => {
     // We can simulate a slow response by not adding any projects initially
-    const helper = createTestHelper(<ProjectList />);
+    const app = createTestHelper(<ProjectList />);
 
     // Verify loading state is shown
-    const initialFrame = helper.lastFrame();
+    const initialFrame = app.lastFrame();
     expect(initialFrame).toContain("Loading");
 
     // Add projects later
     setupTestData([{ id: "project-1", name: "Project 1", sortOrder: 1 }]);
 
     // Wait for the projects to load
-    await helper.waitForText("Project 1");
+    await waitForCondition(() => app.lastFrame().includes("Project 1"));
 
     // Verify loading message is gone and project is displayed
-    const finalOutput = helper.lastFrame();
-    expect(finalOutput).not.toContain("Loading");
-    expect(finalOutput).toContain("Project 1");
+    const finalFrame = app.lastFrame();
+    expect(finalFrame).not.toContain("Loading");
+    expect(finalFrame).toContain("Project 1");
   });
 
   test("handles errors when fetching projects", async () => {
@@ -125,10 +120,10 @@ describe("ProjectList", () => {
 
     try {
       // Render the component
-      const helper = createTestHelper(<ProjectList />);
+      const app = createTestHelper(<ProjectList />);
 
       // Wait for React Query to process the error and reach error state
-      await helper.waitForQueryStatus(["projects"], "error");
+      await waitForCondition(() => app.lastFrame().includes("Error"));
 
       // Verify the mock was called
       expect(mockGetAllProjects).toHaveBeenCalled();
@@ -142,7 +137,7 @@ describe("ProjectList", () => {
       }
 
       // Check for error in UI
-      const output = helper.lastFrame();
+      const output = app.lastFrame();
       expect(output).toContain("Error"); // Check for Error header
       expect(output).toContain(errorMessage); // Check for error message content
     } finally {

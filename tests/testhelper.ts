@@ -1,22 +1,216 @@
 import React from "react";
 import { expect } from "bun:test";
-import type { LogOperation } from "../src/core/logger";
+import { DEBUG } from "../src/constants";
+import { useAppStore } from "../src/store";
 import {
-  renderWithQuery,
-  stripAnsi,
-  enhanceError,
-  press,
-  typeText,
-} from "./utils";
-import { DEV } from "../src/constants";
-import { getInMemoryLogs } from "../src/core/logger";
+  getInMemoryLogs,
+  type LogData,
+  type LogOperation,
+} from "../src/core/logger";
+import { renderWithQuery } from "./utils";
+
+const DEFAULT_TIMEOUT = 1000;
+
+const LINE = Array(80).fill("-").join("");
+
+const logErrorWithFrame = (errorMsg: string, frame: string) => {
+  if (DEBUG) console.log(`${errorMsg}\n${LINE}\n${frame}\n${LINE}`);
+};
+
+const logFrame = (frame: string) => {
+  if (DEBUG) console.log(`${LINE}\n${frame}\n${LINE}`);
+};
+
+/**
+ * Helper function to improve error stack traces by removing the helper function frame
+ * from the stack trace. This makes errors appear to come from where the helper
+ * was invoked rather than from inside the helper.
+ */
+function enhanceError(
+  error: Error,
+  omitFunction: Function,
+  customMessage?: string
+): Error {
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(error, omitFunction);
+  }
+
+  if (customMessage) {
+    error.message = `${error.message}\n${customMessage}`;
+  }
+
+  return error;
+}
+
+/**
+ * Strip ANSI escape codes (colors, formatting) from terminal output
+ */
+export const stripAnsi = (text: string | undefined): string => {
+  if (!text) return "";
+
+  // This regex matches all ANSI escape sequences
+  return text.replace(
+    /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+    ""
+  );
+};
+
+/**
+ * Wait for a condition to be true
+ */
+export async function waitForCondition(
+  condition: () => boolean,
+  timeout = DEFAULT_TIMEOUT
+): Promise<boolean> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    if (condition()) {
+      // Wait for 1 more tick to ensure UI updates are applied
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      return true;
+    }
+
+    // Refresh rate
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+
+  return false;
+}
+
+/**
+ * Wait for a specific log operation to occur
+ * This is useful for waiting for specific application events during testing
+ */
+export async function waitForLogOperation(
+  operation: LogOperation,
+  match: Record<string, string | RegExp>,
+  filterFromLogIndex?: number,
+  timeout = DEFAULT_TIMEOUT
+): Promise<LogData | false> {
+  // Record initial log count to detect when processing completes
+  const initialLogCount =
+    filterFromLogIndex !== undefined
+      ? filterFromLogIndex
+      : getInMemoryLogs().length;
+
+  // XXX: we dont use waitForCondition because we want to return the log
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    // Access logs from in-memory logs collection instead of store
+    const inMemoryLogs = getInMemoryLogs();
+
+    // Remove the initial log count from the current logs
+    const logsSinceInitial = inMemoryLogs.slice(initialLogCount);
+
+    // For every matcher, check if the log message matches
+    const found = logsSinceInitial.find((log) => {
+      return (
+        log.op === operation &&
+        Object.entries(match).every(([key, value]) => {
+          if (typeof value === "string") {
+            return log.data[key].toString().includes(value);
+          }
+
+          return value.test(log.data[key].toString());
+        })
+      );
+    });
+
+    if (found) return found.data;
+
+    // Refresh the condition every 10ms
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+
+  return false;
+}
+
+/**
+ * Simulate key presses in the terminal
+ */
+export const press = async (
+  stdin: { write: (input: string) => void },
+  key: string
+) => {
+  const keyMap: Record<string, string> = {
+    up: "\u001B[A",
+    down: "\u001B[B",
+    left: "\u001B[D",
+    right: "\u001B[C",
+    return: "\r",
+    escape: "\u001B",
+    space: " ",
+    tab: "\t",
+    backspace: "\b",
+    delete: "\u007F",
+    // https://stackoverflow.com/a/75030219/644945
+    ctrl_p: "\u0010",
+    ctrl_l: "\u000C",
+    ctrl_d: "\u0004",
+    ctrl_g: "\u0007",
+    ctrl_n: "\u0011",
+    ctrl_o: "\u000F",
+    ctrl_q: "\u0011",
+    ctrl_r: "\u0012",
+    ctrl_s: "\u0013",
+  };
+
+  // Record initial log count to detect when processing completes
+  const initialLogCount = getInMemoryLogs().length;
+
+  // Give time for terminal to render from other events
+  await new Promise((resolve) => setTimeout(resolve, 1));
+
+  // Send the key press
+  stdin.write(keyMap[key] || key);
+
+  const result = await waitForLogOperation("KEY_PRESSED", {}, initialLogCount);
+
+  if (!result) {
+    console.error(
+      `current logs`,
+      getInMemoryLogs()
+        .slice(initialLogCount)
+        .map(
+          (log) =>
+            `${log.op} ${Object.entries(log.data)
+              .map(([key, value]) => `${key}=${value}`)
+              .join(" ")}`
+        )
+    );
+
+    throw enhanceError(
+      new Error(`Timeout waiting for key press ${key}`),
+      press
+    );
+  }
+
+  // Wait for react to render
+  await new Promise((resolve) => setTimeout(resolve, 1));
+};
+
+/**
+ * Type a string in the terminal
+ */
+export const typeText = (
+  stdin: { write: (input: string) => void },
+  text: string
+) => {
+  for (const char of text) {
+    stdin.write(char);
+  }
+};
 
 /**
  * Creates a comprehensive test helper for working with UI components
  * Provides methods for rendering, querying, and asserting on components
  */
 export function createTestHelper(uiComponent: React.ReactElement) {
-  const result = renderWithQuery(uiComponent);
+  const app = renderWithQuery(uiComponent);
+
+  // Snapshot of the last frame from result.lastFrame()
   let currentFrame = "";
 
   /**
@@ -27,7 +221,9 @@ export function createTestHelper(uiComponent: React.ReactElement) {
      * Captures the current UI frame as a snapshot
      */
     createSnapshot: () => {
-      currentFrame = stripAnsi(result.lastFrame() || "");
+      const frame = app.lastFrame() || "";
+      currentFrame = stripAnsi(frame);
+      logFrame(frame);
       return currentFrame;
     },
 
@@ -41,13 +237,14 @@ export function createTestHelper(uiComponent: React.ReactElement) {
      */
     contains: (pattern: string, customMessage?: string) => {
       try {
-        expect(ui.getFrame()).toContain(pattern);
+        expect(currentFrame).toContain(pattern);
       } catch (error) {
-        throw enhanceError(
-          error as Error,
-          ui.contains,
-          customMessage || `Expected UI to contain: ${pattern}`
+        logErrorWithFrame(
+          customMessage || `Expected to contain: ${pattern}`,
+          currentFrame
         );
+
+        throw enhanceError(error as Error, ui.contains);
       }
     },
 
@@ -56,13 +253,14 @@ export function createTestHelper(uiComponent: React.ReactElement) {
      */
     doesNotContain: (pattern: string, customMessage?: string) => {
       try {
-        expect(ui.getFrame()).not.toContain(pattern);
+        expect(currentFrame).not.toContain(pattern);
       } catch (error) {
-        throw enhanceError(
-          error as Error,
-          ui.doesNotContain,
-          customMessage || `Expected UI to not contain: ${pattern}`
+        logErrorWithFrame(
+          customMessage || `Expected to not contain: ${pattern}`,
+          currentFrame
         );
+
+        throw enhanceError(error as Error, ui.doesNotContain);
       }
     },
 
@@ -71,14 +269,39 @@ export function createTestHelper(uiComponent: React.ReactElement) {
      */
     matches: (pattern: RegExp, customMessage?: string) => {
       try {
-        expect(ui.getFrame()).toMatch(pattern);
+        expect(currentFrame).toMatch(pattern);
       } catch (error) {
-        throw enhanceError(
-          error as Error,
-          ui.matches,
-          customMessage || `Expected UI to match: ${pattern}`
+        logErrorWithFrame(
+          customMessage || `Expected to match: ${pattern}`,
+          currentFrame
         );
+
+        throw enhanceError(error as Error, ui.matches);
       }
+    },
+
+    /**
+     * Wait for a view to be rendered
+     */
+    viewRendered: async (component: string) => {
+      const result = await waitForLogOperation(
+        "VIEW_RENDERED",
+        { component },
+        0
+      );
+
+      ui.createSnapshot();
+
+      if (result) {
+        return;
+      }
+
+      console.error(`current logs`, getInMemoryLogs());
+
+      throw enhanceError(
+        new Error(`Timeout waiting for ${component} to be rendered`),
+        ui.viewRendered
+      );
     },
   };
 
@@ -99,7 +322,13 @@ export function createTestHelper(uiComponent: React.ReactElement) {
       const matchingLogs = getInMemoryLogs()
         .filter((log) => log.op === event)
         .filter((log) => {
-          return keys.every((key) => properties[key].test(log.data[key]));
+          return keys.every((key) => {
+            const value = log.data[key];
+            if (typeof value === "string") {
+              return properties[key].test(value);
+            }
+            return false;
+          });
         });
 
       const propsStr = keys
@@ -108,154 +337,75 @@ export function createTestHelper(uiComponent: React.ReactElement) {
       const defaultPostfix = `[${event}]: ${propsStr}`;
 
       if (matchingLogs.length === 0) {
-        const error = new Error(
-          customMessage || `No logs found ${defaultPostfix}`
+        logErrorWithFrame(
+          customMessage || `No log found ${defaultPostfix}`,
+          currentFrame
         );
-        throw enhanceError(error, logs.contains);
+
+        throw enhanceError(new Error(), logs.contains);
       }
 
       return matchingLogs;
     },
+
+    /**
+     * Wait for a specific log to appear in the logs
+     * Returns true when log is found, otherwise false on timeout
+     */
+    waitFor: async (
+      operation: LogOperation,
+      properties: Record<string, RegExp | string>,
+      customMessage?: string,
+      timeout = DEFAULT_TIMEOUT
+    ): Promise<LogData | false> => {
+      const result = await waitForLogOperation(operation, properties, timeout);
+
+      if (result) return result;
+
+      const errorMessage =
+        customMessage ||
+        `Timeout: Log operation "${operation}" not found within ${timeout}ms`;
+
+      // When timeout occurs, provide debug info using formatted logs from store
+      console.error(errorMessage);
+
+      // Get the last 5 logs for debugging from the store (already formatted)
+      const rawLogs = useAppStore.getState().logs;
+      console.error("Last 5 logs (excluding logToInMemory calls):");
+      rawLogs.slice(-5).forEach((log) => {
+        console.error(`[${log.level}] ${log.message}`);
+      });
+
+      throw enhanceError(
+        new Error("Timeout waiting for log operation"),
+        waitForLogOperation
+      );
+    },
   };
-
-  /**
-   * Wait for a specific text to appear in the output
-   */
-  async function waitForText(text: string, timeout = 3000): Promise<void> {
-    const startTime = Date.now();
-    let lastOutput = "";
-
-    while (Date.now() - startTime < timeout) {
-      const output = result.lastFrame();
-      lastOutput = output || "";
-
-      // Strip ANSI codes before checking for text
-      const strippedOutput = stripAnsi(output || "");
-
-      if (strippedOutput.includes(text)) {
-        return;
-      }
-
-      // Try a less strict check for partial matches
-      if (text.includes(":") && text.split(":").length > 1) {
-        const [prefix, message] = text.split(":", 2);
-        if (
-          strippedOutput.includes(prefix) &&
-          strippedOutput.includes(message.trim())
-        ) {
-          return;
-        }
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-
-    // When timeout occurs, provide the actual content for debugging
-    const strippedOutput = stripAnsi(lastOutput);
-    console.error("Timeout waiting for text. Current content:");
-    console.error(`Expected: "${text}"`);
-    console.error(
-      `Actual content (${strippedOutput.length} chars):\n${strippedOutput}`
-    );
-
-    const error = new Error(
-      `Timeout: Text "${text}" not found within ${timeout}ms`
-    );
-    throw enhanceError(error, waitForText);
-  }
-
-  /**
-   * Wait for a condition to be true
-   */
-  async function waitForCondition(
-    timeout = 3000,
-    condition: () => boolean,
-    errorContext?: string
-  ): Promise<void> {
-    const startTime = Date.now();
-    let conditionResult = false;
-
-    while (Date.now() - startTime < timeout) {
-      conditionResult = condition();
-      if (conditionResult) {
-        // Wait for 1 more tick to ensure UI updates are applied
-        await new Promise((resolve) => setTimeout(resolve, 1));
-        return;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-
-    // Get the current frame to include in the error message
-    const currentFrame = stripAnsi(result.lastFrame() || "");
-
-    // Create a more informative error message
-    const errorMessage =
-      `Timeout: Condition not met within ${timeout}ms` +
-      (errorContext ? `\nContext: ${errorContext}` : "") +
-      `\nCurrent frame content:\n${currentFrame}`;
-
-    const error = new Error(errorMessage);
-    throw enhanceError(error, waitForCondition);
-  }
-
-  /**
-   * Wait for a specific query status (success, error, loading)
-   */
-  async function waitForQueryStatus(
-    queryKey: any[],
-    status: "error" | "success" | "loading",
-    timeout = 3000
-  ): Promise<void> {
-    return waitForCondition(
-      timeout,
-      () => {
-        const state = result.queryClient.getQueryState(queryKey);
-        return state?.status === status;
-      },
-      `Expected query status to be ${status}`
-    );
-  }
-
-  /**
-   * Wait for a specific log operation to occur
-   */
-  async function waitForLogOperation(
-    operation: LogOperation,
-    match: Record<string, any>,
-    timeout = 3000
-  ): Promise<Record<string, any>> {
-    // Implementation directly in testhelper to avoid circular dependencies
-    // This is a simplified version that can be expanded as needed
-    return waitForCondition(
-      timeout,
-      () => {
-        // Add implementation if needed
-        return true;
-      },
-      `Expected log operation to be ${operation}`
-    ) as unknown as Promise<Record<string, any>>;
-  }
 
   /**
    * User action helpers
    */
   const user = {
+    _acts: async (description: string, action: Promise<void>) => {
+      if (DEBUG) console.log(`User ${description}...`);
+      await action;
+      ui.createSnapshot();
+    },
+
     /**
      * Perform an action with a descriptive label
      */
-    does: (description: string, action: Promise<void>) => {
-      console.log(`User ${description}...`);
+    does: (actions: Promise<void>) => {
       return {
-        sees: async (visualChecks: () => void) => {
+        sees: async (description: string, visualChecks: () => void) => {
           try {
-            await action;
-            // Update the frame after the action
-            ui.createSnapshot();
-            if (DEV) console.log(result.lastFrame());
+            await actions;
+            if (DEBUG) console.log(`And ${description}...`);
             visualChecks();
             return user;
           } catch (error) {
-            console.log(result.lastFrame());
+            logErrorWithFrame(`Expected to see ${description}`, ui.getFrame());
             throw error;
           }
         },
@@ -266,45 +416,66 @@ export function createTestHelper(uiComponent: React.ReactElement) {
      * Press a key
      */
     press: (key: string) => {
-      return user.does(
-        `presses ${key}`,
-        Promise.resolve().then(() => {
-          press(result.stdin, key);
-        })
-      );
+      return user._acts(`presses ${key}`, press(app.stdin, key));
     },
 
     /**
      * Type text
      */
     type: (text: string) => {
-      return user.does(
+      return user._acts(
         `types "${text}"`,
         Promise.resolve().then(() => {
-          typeText(result.stdin, text);
+          typeText(app.stdin, text);
         })
       );
     },
   };
 
-  return {
-    // Original helper functions
-    lastFrame: () => stripAnsi(result.lastFrame() || ""),
-    rawFrame: result.lastFrame,
-    queryClient: result.queryClient,
-    waitForText,
-    waitForCondition,
-    waitForQueryStatus,
-    waitForLogOperation,
-    press: async (key: string) => await press(result.stdin, key),
-    type: (text: string) => typeText(result.stdin, text),
-    unmount: result.unmount,
-    frames: result.frames,
-    stdin: result.stdin,
+  /**
+   * Remote state helpers, form react-query
+   */
+  const query = {
+    client: app.queryClient,
 
+    /**
+     * Wait for a specific query status (success, error, loading)
+     */
+    waitForQueryStatus: async (
+      queryKey: string[],
+      status: "error" | "success" | "loading"
+    ) => {
+      const result = await waitForCondition(() => {
+        const state = query.client.getQueryState(queryKey);
+        return state?.status === status;
+      });
+
+      if (!result) {
+        throw enhanceError(
+          new Error(
+            `Timeout waiting for ${queryKey.join(".")} to be ${status}`
+          ),
+          query.waitForQueryStatus
+        );
+      }
+    },
+  };
+
+  return {
     // Enhanced test helpers
     ui,
     logs,
     user,
+    query,
+
+    // Expose app methods
+    rawFrame: app.lastFrame,
+    unmount: app.unmount,
+    frames: app.frames,
+
+    // Wrapped helpers
+    press: async (key: string) => await press(app.stdin, key),
+    type: (text: string) => typeText(app.stdin, text),
+    lastFrame: () => stripAnsi(app.lastFrame() || ""),
   };
 }

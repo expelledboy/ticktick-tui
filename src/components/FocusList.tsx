@@ -1,197 +1,259 @@
 /**
  * FocusList Component
  *
- * A generic, reusable component that provides keyboard navigation and focus
- * management for any list-based interface, using the application's keybinding system.
+ * A minimalist but powerful component for keyboard-navigable lists in terminal UI.
+ * Designed with simplicity, focused responsibility, and clear separation of concerns.
  */
-import { useEffect, useState, useCallback, useRef, memo } from "react";
-import { Box, Text, type Key } from "ink";
-import { useKeyHandler } from "../keybindings";
-import type { AppMode } from "../keybindings/useKeyHandler";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+} from "react";
+import { Box, Text } from "ink";
+import { type AppMode, useKeyHandler } from "../keybindings";
+import { useDebugLogs } from "../hooks/useDebugLogs";
 import { debug } from "../core/logger";
+
+/**
+ * Core types for the FocusList component
+ */
+type ItemId = string;
 
 export interface RenderItemProps<T> {
   item: T;
+  index: number;
   isFocused: boolean;
-  isSelected?: boolean;
+  isSelected: boolean;
 }
 
 export interface FocusListProps<T> {
-  // Core data and callbacks
-  items: T[]; // The list of items to display
-  onSelect?: (item: T | null) => void; // Callback when an item is selected
-  selectedId?: string | null; // Currently selected item ID (optional)
-  getItemId?: (item: T) => string; // Function to get unique ID from item
+  // Data
+  items: T[];
+  getItemId?: (item: T) => ItemId;
+  selectedId?: ItemId | null;
 
-  // Custom rendering
-  renderItem: (props: RenderItemProps<T>) => React.ReactNode;
-  renderHeader?: () => React.ReactNode; // Custom header renderer
-  renderEmpty?: () => React.ReactNode; // Custom empty state renderer
+  // Callbacks
+  onSelect?: (item: T | null) => void;
+  onFocusChange?: (index: number) => void;
 
-  // Customization
-  title?: string; // Optional list title
-  emptyMessage?: string; // Message to show when list is empty
+  // Rendering
+  renderItem: (props: RenderItemProps<T>) => ReactNode;
 
-  // Mode
-  mode: AppMode;
+  // Keybindings mode
+  mode?: AppMode;
+
+  // Optional customization
+  initialFocusIndex?: number;
+  title?: string;
+  emptyMessage?: string;
+  renderEmpty?: () => ReactNode;
+  renderContainer?: (props: { children: ReactNode }) => ReactNode;
+  renderHeader?: () => ReactNode;
 }
 
-function deepEqual(a: any[], b: any[]): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
+/**
+ * FocusList Component
+ *
+ * A streamlined approach to keyboard-navigable lists with sensible defaults
+ * and clean external APIs.
+ */
+function FocusList<T>({
+  // Data
+  items,
+  getItemId = (item: any) => item.id,
+  selectedId = null,
 
-// Custom hook to manage focus state and navigation
-function useFocusManagement<T>(
-  items: T[],
-  selectedId: string | null | undefined,
-  getItemId: (item: T) => string
-) {
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const firstMount = useRef(true);
-  const previousItems = useRef(items);
-  const previousSelectedId = useRef(selectedId);
-  const hasUserNavigated = useRef(false);
-  const [renderCount, setRenderCount] = useState(0);
+  // Callbacks
+  onSelect,
+  onFocusChange,
 
-  // Determine if items actually changed using deep comparison
-  const itemsChanged = !deepEqual(previousItems.current, items);
-  const selectedIdChanged = previousSelectedId.current !== selectedId;
+  // Rendering
+  renderItem,
+  renderEmpty,
+  renderContainer,
+  renderHeader,
 
-  // Reset focused index when items or selection changes
-  // BUT only if user hasn't manually navigated
-  useEffect(() => {
+  // Keybindings mode
+  mode = "global",
+
+  // Options
+  initialFocusIndex = 0,
+  title,
+  emptyMessage = "No items found",
+}: FocusListProps<T>) {
+  // Log component lifecycle for testing
+  useDebugLogs("FocusList");
+
+  // ===== STATE =====
+  // Track focus position - the core state of this component
+  const [focusedIndex, setFocusedIndex] = useState(initialFocusIndex);
+
+  // Track the last selected ID to detect external changes
+  const lastSelectedIdRef = useRef<string | null>(selectedId);
+
+  // Flag to allow navigation to break from selection sync
+  const userNavigatedRef = useRef(false);
+
+  // ===== DERIVED VALUES =====
+  // Safely get the currently focused item (or null if none)
+  const focusedItem =
+    items.length > 0 && focusedIndex >= 0 && focusedIndex < items.length
+      ? items[focusedIndex]
+      : null;
+
+  // ===== INITIAL SETUP =====
+  // Handle initial focus and selection sync immediately
+  useLayoutEffect(() => {
     if (items.length === 0) return;
 
-    // Update refs for next comparison
-    previousItems.current = items;
-    previousSelectedId.current = selectedId;
-
-    // Skip focus reset if user has explicitly navigated
-    // and this is just a reference update (not content change)
-    if (hasUserNavigated.current && !itemsChanged && !selectedIdChanged) {
-      return;
-    }
-
-    // If we have a selectedId, try to focus that item
+    // Priority 1: Focus the selected item if provided
     if (selectedId) {
       const selectedIndex = items.findIndex(
         (item) => getItemId(item) === selectedId
       );
       if (selectedIndex !== -1) {
         setFocusedIndex(selectedIndex);
-        // Update render count to trigger the debug log
-        setRenderCount((prev) => (prev + 1) % 1000);
-        firstMount.current = false;
         return;
       }
     }
 
-    // Set first mount to false after initial run
-    if (firstMount.current) {
-      firstMount.current = false;
-    }
-
-    // Otherwise focus the first item only on initial mount or when data actually changes
-    if (firstMount.current || itemsChanged) {
+    // Priority 2: Make sure initialFocusIndex is within bounds
+    if (initialFocusIndex >= items.length) {
       setFocusedIndex(0);
-      // Update render count to trigger the debug log
-      setRenderCount((prev) => (prev + 1) % 1000);
     }
-  }, [items, selectedId, getItemId, itemsChanged, selectedIdChanged]);
+  }, []); // Only run on mount
 
-  // Reset the navigation flag when items truly change (not just reference changes)
+  // ===== EFFECTS =====
+  // EFFECT 1: Notify parent about focus changes
   useEffect(() => {
-    if (itemsChanged) {
-      hasUserNavigated.current = false;
-    }
-  }, [itemsChanged]);
+    onFocusChange?.(focusedIndex);
+  }, [focusedIndex, onFocusChange]);
 
-  // Navigation functions - memoized
+  // EFFECT 2: Ensure focus stays in bounds when items change
+  useEffect(() => {
+    if (items.length === 0) return;
+
+    // If focus is out of bounds, reset to start
+    if (focusedIndex >= items.length) {
+      setFocusedIndex(0);
+    }
+  }, [items, focusedIndex]);
+
+  // EFFECT 3: Sync focus with selection ONLY when selectedId changes externally
+  useEffect(() => {
+    // Skip if no items
+    if (items.length === 0) return;
+
+    // Skip if user manually navigated
+    if (userNavigatedRef.current) return;
+
+    // Skip if selectedId hasn't changed
+    if (selectedId === lastSelectedIdRef.current) return;
+
+    // Update the ref to track the new selectedId
+    lastSelectedIdRef.current = selectedId;
+
+    // If we have a selected item, try to focus it
+    if (selectedId) {
+      const selectedIndex = items.findIndex(
+        (item) => getItemId(item) === selectedId
+      );
+      if (selectedIndex !== -1) {
+        setFocusedIndex(selectedIndex);
+      }
+    }
+  }, [items, selectedId, getItemId]);
+
+  // ===== HANDLERS =====
+  // Handle navigation with wraparound
   const navigate = useCallback(
-    (action: string) => {
+    (direction: "up" | "down") => {
       if (items.length === 0) return;
 
       // Mark that user has explicitly navigated
-      hasUserNavigated.current = true;
+      userNavigatedRef.current = true;
 
-      // Use a functional update to ensure we're working with latest state
-      switch (action) {
-        case "up":
-          setFocusedIndex((prev) => (prev - 1 + items.length) % items.length);
-          break;
-        case "down":
-          setFocusedIndex((prev) => (prev + 1) % items.length);
-          break;
-      }
-
-      // Force a re-render by incrementing the render count
-      setRenderCount((prev) => (prev + 1) % 1000);
+      setFocusedIndex((prevIndex) => {
+        if (direction === "up") {
+          return (prevIndex - 1 + items.length) % items.length;
+        } else {
+          return (prevIndex + 1) % items.length;
+        }
+      });
     },
-    [items.length, focusedIndex]
+    [items.length]
   );
 
-  return { focusedIndex, navigate };
-}
+  // Handle selection
+  const handleSelect = useCallback(() => {
+    if (onSelect && focusedItem) {
+      onSelect(focusedItem);
+    }
+  }, [onSelect, focusedItem]);
 
-function FocusList<T>({
-  items,
-  onSelect,
-  selectedId,
-  getItemId = (item: any) => item.id,
-  renderItem,
-  renderHeader,
-  renderEmpty,
-  title,
-  emptyMessage = "No items found",
-  mode,
-}: FocusListProps<T>) {
-  // Use the custom hook for focus management
-  const { focusedIndex, navigate } = useFocusManagement(
-    items,
-    selectedId,
-    getItemId
-  );
-
-  // Handle key actions
-  const handleAction = useCallback(
+  // Map keys to actions
+  const handleKeyAction = useCallback(
     (actionCategory: string, action: string) => {
-      if (actionCategory !== "navigation" || items.length === 0) return;
-
-      if (action === "up" || action === "down") {
-        navigate(action);
-      } else if (action === "select" && onSelect && items[focusedIndex]) {
-        onSelect(items[focusedIndex]);
+      // Handle navigation actions
+      if (actionCategory === "navigation") {
+        if (action === "up" || action === "down") {
+          navigate(action as "up" | "down");
+        } else if (action === "select") {
+          handleSelect();
+        }
       }
     },
-    [items, focusedIndex, onSelect, navigate, mode]
+    [navigate, handleSelect]
   );
 
-  // Register keyboard handler
-  useKeyHandler(mode, handleAction);
+  // Connect to keyboard handler
+  useKeyHandler(mode, handleKeyAction);
 
-  // Helper function to render the header
-  const renderHeaderContent = useCallback(() => {
+  // ===== RENDERING LOGIC =====
+  // 1. Render header (if provided)
+  const headerContent = useMemo(() => {
     if (renderHeader) return renderHeader();
-    if (title)
+    if (title) {
       return (
-        <Box paddingLeft={1}>
+        <Box paddingX={1} paddingBottom={1}>
           <Text bold underline>
             {title}
           </Text>
         </Box>
       );
+    }
     return null;
-  }, [renderHeader, title, items.length]);
+  }, [renderHeader, title]);
 
-  // Render empty state if no items
+  // 3. Render items - MOVED BEFORE the conditional return
+  const itemsContent = useMemo(() => {
+    if (items.length === 0) return null;
+
+    return items.map((item, index) => (
+      <Box key={getItemId(item)}>
+        {renderItem({
+          item,
+          index,
+          isFocused: index === focusedIndex,
+          isSelected: selectedId ? getItemId(item) === selectedId : false,
+        })}
+      </Box>
+    ));
+  }, [items, getItemId, renderItem, focusedIndex, selectedId]);
+
+  // 2. Handle empty state - AFTER all hooks are defined
   if (items.length === 0) {
     return (
       <Box flexDirection="column">
-        {renderHeaderContent()}
+        {headerContent}
         {renderEmpty ? (
           renderEmpty()
         ) : (
-          <Box marginTop={1}>
+          <Box paddingX={1}>
             <Text dimColor>{emptyMessage}</Text>
           </Box>
         )}
@@ -199,26 +261,22 @@ function FocusList<T>({
     );
   }
 
-  // Render list with focused items
+  // 4. Final assembly - either use custom container or default
+  if (renderContainer) {
+    return (
+      <Box flexDirection="column" overflow="hidden">
+        {headerContent}
+        {renderContainer({ children: itemsContent })}
+      </Box>
+    );
+  }
+
   return (
     <Box flexDirection="column" overflow="hidden">
-      {renderHeaderContent()}
-      <Box flexDirection="column" marginTop={1}>
-        {items.map((item, index) => (
-          <Box key={getItemId(item)}>
-            {renderItem({
-              item,
-              isFocused: focusedIndex === index,
-              isSelected: selectedId
-                ? getItemId(item) === selectedId
-                : undefined,
-            })}
-          </Box>
-        ))}
-      </Box>
+      {headerContent}
+      <Box flexDirection="column">{itemsContent}</Box>
     </Box>
   );
 }
 
-// Export a memoized version to avoid unnecessary re-renders
-export default memo(FocusList) as typeof FocusList;
+export default FocusList;

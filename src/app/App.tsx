@@ -13,7 +13,8 @@ import Project from "./screens/Project";
 import DebugPanel from "./screens/DebugPanel";
 import LogsPanel from "./screens/LogsPanel";
 import TaskPanel from "./screens/TaskPanel";
-import { useKeyLogger } from "../keybindings/useKeyLogger";
+import { debug } from "../core/logger";
+import { useEffect } from "react";
 
 const micDrops = [
   "Awesome! Task mastery is your superpower! ✨",
@@ -36,10 +37,15 @@ export const byeMsg = micDrops[Math.floor(Math.random() * micDrops.length)];
  */
 export const App = () => {
   const viewApp = useAppStore((s) => s.viewApp);
+  const activeView = useAppStore((s) => s.activeView);
+
+  // Log to debug when the activeView changes
+  useEffect(() => {
+    debug("VIEW_CHANGED", { view: activeView });
+  }, [activeView]);
 
   useDebugLogs("App");
   useGlobalKeybindings();
-  useKeyLogger();
 
   return viewApp ? (
     <Layout

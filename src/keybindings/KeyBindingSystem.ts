@@ -1,3 +1,5 @@
+import { type Key } from "ink";
+
 /**
  * KeyBindingSystem - A pure functional approach to handling keyboard input
  *
@@ -148,7 +150,6 @@ export function parseKeyPattern(pattern: KeyPattern) {
   const specialKeys = [
     "space",
     "escape",
-    "enter",
     "return",
     "tab",
     "uparrow",
@@ -192,7 +193,6 @@ export function matchesInput(binding: KeyBinding, input: RawInput): boolean {
     const specialKeyMap: Record<string, keyof RawInput["key"]> = {
       space: "space",
       escape: "escape",
-      enter: "return",
       return: "return",
       tab: "tab",
       uparrow: "upArrow",
@@ -238,14 +238,19 @@ export function isBindingActiveInContext(
     return true;
   }
 
-  // Case 2: View category bindings (projects, project, task)
+  // Case 2: Navigation bindings are active when activeView is mode
+  if (category === "navigation") {
+    return activeView === mode || mode === "global";
+  }
+
+  // Case 3: View category bindings (projects, project, task)
   // are active ONLY when BOTH mode AND activeView match the category exactly
   if (viewModes.includes(category as ViewMode)) {
     // This is the critical change: require BOTH mode AND activeView to match
     return mode === category && activeView === category;
   }
 
-  // Case 3: Non-view categories (navigation, ui, etc.)
+  // Case 4: Non-view categories (navigation, ui, etc.)
   // are active only in global mode
   return mode === "global";
 }
@@ -363,4 +368,54 @@ export function configToBindings(
   });
 
   return bindings;
+}
+
+/**
+ * Format the key object for logging
+ */
+export const formatKeyObject = (key: Key) => {
+  return Object.entries(key)
+    .filter(([_, value]) => value)
+    .map(([key]) => key)
+    .join("+");
+};
+
+// Visualize special characters
+export const formatInput = (input: string) => {
+  if (input === "\r") return "\\r";
+  if (input === "\n") return "\\n";
+  if (input === "\t") return "\\t";
+  if (input === "\b") return "\\b";
+  if (input === "\f") return "\\f";
+  if (input === "\v") return "\\v";
+  if (input === "\0") return "\\0";
+
+  return input;
+};
+
+/**
+ * Format the raw input for logging
+ */
+export function formatRawInput(rawInput: RawInput) {
+  const output = [];
+  const modifiers = formatKeyObject(rawInput.key);
+  if (modifiers) output.push(modifiers);
+  if (rawInput.input) output.push(formatInput(rawInput.input));
+  return output.join("+");
+}
+
+/**
+ * Parse handleInput into RawInput
+ */
+export function parseInput(input: string, key: Key) {
+  const rawInput: RawInput = {
+    input,
+    key: {
+      ...key,
+      // Detect special characters from the input string
+      space: input === " ",
+    },
+  };
+
+  return rawInput;
 }

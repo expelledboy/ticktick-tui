@@ -1,4 +1,4 @@
-# strict mode
+export TICKTICK_TEST := "true"
 
 set shell := ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
 
@@ -13,7 +13,7 @@ bun-test *args:
 unit-test: (bun-test tests)
 
 e2e-test:
-    @ export TICKTICK_DEBUG=true && bun test \
+    @ bun test \
       --timeout 15000 \
       --bail \
       --preload ./src/ticktick/api.mock \

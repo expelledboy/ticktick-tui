@@ -2,10 +2,20 @@
 import fs from "node:fs";
 import { parseArgs } from "node:util";
 import { AppSettingsSchema, type AppSettings } from "./types";
-import { debug, logError } from "./logger";
-import { DEV } from "../constants";
+import { logError } from "./logger";
+import { TEST } from "../constants";
 
 const defaultConfigPath = "~/.config/ticktick-tui/config.json";
+const testConfigPath = "/tmp/ticktick-tui.config.json";
+
+// Remove the config file if it exists
+if (fs.existsSync(testConfigPath)) {
+  fs.unlinkSync(testConfigPath);
+}
+
+const CONFIG_PATH = TEST
+  ? testConfigPath
+  : process.env["TICKTICK_CONFIG_PATH"] || defaultConfigPath;
 
 /**
  * Loads config from disk, env vars, and CLI args
@@ -13,9 +23,9 @@ const defaultConfigPath = "~/.config/ticktick-tui/config.json";
  */
 export const loadConfig = (
   args: string[] = process.argv.slice(2),
-  configPath: string = process.env["TICKTICK_CONFIG_PATH"] || defaultConfigPath
+  configPath: string = CONFIG_PATH
 ): AppSettings => {
-  // Check if config file exists
+  // Check if config file exists (skip if testing)
   const configExists = fs.existsSync(configPath);
 
   // Load from disk

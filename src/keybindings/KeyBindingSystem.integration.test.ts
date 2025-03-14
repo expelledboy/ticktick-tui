@@ -131,8 +131,6 @@ describe("KeyBindingSystem Integration", () => {
   });
 
   test("getBindingPriorities provides expected priorities for all bindings", () => {
-    const bindings = configToBindings(sampleConfig);
-
     // In project context
     const projectContext = createContext("project", "project");
     const priorities = getBindingPriorities(projectContext);
@@ -148,8 +146,8 @@ describe("KeyBindingSystem Integration", () => {
       BindingPriority.GlobalAction
     );
 
-    // Navigation should be inactive in view mode
-    expect(priorities["navigation.up"].active).toBe(false);
+    // Navigation should be active when activeView === mode
+    expect(priorities["navigation.up"].active).toBe(true);
 
     // Projects category should be inactive in project context
     expect(priorities["projects.newProject"].active).toBe(false);

@@ -4,6 +4,7 @@ import { config } from "../core/config";
 import * as logger from "../core/logger";
 import { keybindingsSchema, defaultKeybindings } from "./schema";
 import { z } from "zod";
+import { TEST } from "../constants";
 
 // Define KeyBindings type from the schema
 type KeyBindings = z.infer<typeof keybindingsSchema>;
@@ -81,6 +82,6 @@ let keyBindings: KeyBindings | null = null;
 // Get all keybindings
 export function getAllKeybindings(): KeyBindings {
   if (keyBindings) return keyBindings;
-  keyBindings = loadKeybindings();
+  keyBindings = TEST ? defaultKeybindings : loadKeybindings();
   return keyBindings;
 }
