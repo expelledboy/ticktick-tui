@@ -1,7 +1,54 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "ink-testing-library";
+import React, { useState } from "react";
 import { mockState } from "../src/ticktick/api.mock";
 import type { Project, Task } from "../src/core/types";
+
+/**
+ * Props controller interface
+ */
+export interface PropController {
+  setProps: <T extends Record<string, any>>(newProps: T) => void;
+}
+
+/**
+ * Creates a component with dynamic props from a render function
+ * This allows props to be updated during test execution
+ *
+ * This is a simplified version that works better with Ink's rendering model
+ */
+export function createPropsController<P extends object = {}>(
+  renderFn: (props: P) => React.ReactElement,
+  initialProps: P = {} as P
+): [React.ReactElement, PropController] {
+  // Create a simple container component that manages props via state
+  const Container = () => {
+    const [props, setProps] = useState<P>(initialProps);
+
+    // Expose the setProps function globally for the test to use
+    (Container as any).setProps = (newProps: Partial<P>) => {
+      setProps((prev) => ({ ...prev, ...newProps }));
+    };
+
+    return renderFn(props);
+  };
+
+  // Create a props controller that uses the exposed setProps function
+  const controller: PropController = {
+    setProps: (newProps) => {
+      // Directly call the setProps function on the Container
+      if ((Container as any).setProps) {
+        (Container as any).setProps(newProps);
+      } else {
+        console.error(
+          "Container not mounted yet - try using a timeout before setting props"
+        );
+      }
+    },
+  };
+
+  return [<Container />, controller];
+}
 
 /**
  * Create a QueryClient configured for testing

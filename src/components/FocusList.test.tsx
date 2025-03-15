@@ -2,6 +2,7 @@ import { describe, test, expect, mock } from "bun:test";
 import React from "react";
 import { Box, Text } from "ink";
 import { createTestHelper, waitForCondition } from "../../tests/testhelper";
+import { createPropsController } from "../../tests/utils";
 import FocusList from "./FocusList";
 
 // Define the test item type
@@ -28,10 +29,6 @@ const createTestItems = (count = 3): TestItem[] => {
 
 // Focus indicator symbol
 const FOCUS = "›";
-
-// How quickly async operations should be done
-// XXX: Adjust this depending on speed of your terminal
-const ASYNC_DELAY = 20;
 
 // Create a simple item renderer with generic type support
 function createItemRenderer<T extends { name: string }>() {
@@ -244,95 +241,73 @@ describe("Focus Management", () => {
   });
 
   test("maintains focus in bounds when items change", async () => {
-    // Start with 3 items
+    // Create an initial list of 3 items
     const items = createTestItems(3);
-    const renderItem = createItemRenderer<TestItem>();
 
-    // Create a component with a wrapper to allow changing props
-    const TestWrapper = () => {
-      const [currentItems, setCurrentItems] = React.useState(items);
-
-      // Set up a timer to reduce the items after a delay
-      React.useEffect(() => {
-        const timer = setTimeout(() => {
-          // Reduce to just 1 item
-          setCurrentItems([items[0]]);
-        }, ASYNC_DELAY);
-
-        return () => clearTimeout(timer);
-      }, []);
-
-      return (
+    // Create a component with controllable props, providing initial props
+    const [component, propController] = createPropsController(
+      (props) => (
         <FocusList
-          items={currentItems}
-          renderItem={renderItem}
+          renderItem={createItemRenderer<TestItem>()}
           initialFocusIndex={2} // Start focused on the third item
+          {...props}
         />
-      );
-    };
+      ),
+      { items } // Initial props with all 3 items
+    );
 
-    const { ui, lastFrame } = createTestHelper(<TestWrapper />);
+    const { ui, lastFrame } = createTestHelper(component);
 
     // Wait for the component to initially render with focus on the third item
     await ui.viewRendered("FocusList");
 
     ui.contains(`${FOCUS} Item 3`);
 
+    // Update to just one item
+    propController.setProps({ items: [items[0]] });
+
     // Wait for the items to change (third item removed)
-    const removed = await waitForCondition(() => {
+    const itemsChanged = await waitForCondition(() => {
       const frame = lastFrame();
       return !frame.includes("Item 3");
     });
-    // we need to create a snapshot to see the final state
+
+    expect(itemsChanged, "Items did not change").toBe(true);
+
     ui.createSnapshot();
-
-    expect(removed, "Item 3 not removed");
-
     ui.contains(`${FOCUS} Item 1`);
   });
 
   test("focuses item matching selectedId when it changes", async () => {
     const items = createTestItems(3);
-    const renderItem = createItemRenderer<TestItem>();
 
-    // Create a component with a wrapper to allow changing props
-    const TestWrapper = () => {
-      const [selected, setSelected] = React.useState<string | null>(null);
+    // Create a component with controllable props, providing initial props
+    const [component, propController] = createPropsController(
+      (props) => (
+        <FocusList renderItem={createItemRenderer<TestItem>()} {...props} />
+      ),
+      { items, selectedId: null } // Initial props
+    );
 
-      // Set up a timer to change the selection after a delay
-      React.useEffect(() => {
-        const timer = setTimeout(() => {
-          setSelected("item-2");
-        }, ASYNC_DELAY);
-
-        return () => clearTimeout(timer);
-      }, []);
-
-      return (
-        <FocusList
-          items={items}
-          renderItem={renderItem}
-          selectedId={selected}
-        />
-      );
-    };
-
-    const { ui, lastFrame } = createTestHelper(<TestWrapper />);
+    const { ui, lastFrame } = createTestHelper(component);
 
     await ui.viewRendered("FocusList");
 
-    // Wait for the component to initially render with focus on the first item
+    // Verify initial focus on first item
     ui.contains(`${FOCUS} Item 1`);
 
+    // Update selectedId to focus the second item
+    propController.setProps({ selectedId: "item-2" });
+
     // Wait for the selection to change to the second item
-    const moved = await waitForCondition(() =>
+    const focusChanged = await waitForCondition(() =>
       lastFrame().includes(`${FOCUS} Item 2`)
     );
-    ui.createSnapshot();
 
-    expect(moved, "Focus did not move to Item 2").toBe(true);
+    expect(focusChanged, "Focus did not move to Item 2").toBe(true);
 
     // Verify focus moved to the second item
+    ui.createSnapshot();
     ui.contains(`${FOCUS} Item 2`);
     ui.contains("  Item 1"); // First item no longer focused
   });
@@ -395,25 +370,20 @@ describe("Selection", () => {
     const items = createTestItems(3);
     const renderItem = createItemRenderer<TestItem>();
 
-    // Track state for selected ID
-    const TestWrapper = () => {
-      const [selected, setSelected] = React.useState<string | null>(null);
+    // Create component with controllable selectedId prop
+    const [component, propController] = createPropsController((props) => (
+      <FocusList<TestItem>
+        items={items}
+        renderItem={renderItem}
+        onSelect={(item) => {
+          // When an item is selected, update the selectedId prop
+          propController.setProps({ selectedId: item?.id ?? null });
+        }}
+        {...props}
+      />
+    ));
 
-      const handleSelect = (item: TestItem | null) => {
-        setSelected(item?.id ?? null);
-      };
-
-      return (
-        <FocusList<TestItem>
-          items={items}
-          renderItem={renderItem}
-          onSelect={handleSelect}
-          selectedId={selected}
-        />
-      );
-    };
-
-    const { ui, user } = createTestHelper(<TestWrapper />);
+    const { ui, user } = createTestHelper(component);
 
     // Wait for initial render with focus on first item
     await ui.viewRendered("FocusList");
