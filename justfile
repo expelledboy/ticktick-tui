@@ -60,4 +60,4 @@ local-run:
 run: typecheck local-build local-run
 
 storybook:
-    bun run storybook
+  bun run storybook

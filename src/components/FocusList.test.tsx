@@ -209,7 +209,7 @@ describe("Focus Management", () => {
     });
   });
 
-  test("wraps focus from last to first item", async () => {
+  test("focus remains in bounds", async () => {
     const items = createTestItems(3);
     const renderItem = createItemRenderer<TestItem>();
 
@@ -227,17 +227,26 @@ describe("Focus Management", () => {
     // Verify initial focus is on the last item
     ui.contains(`${FOCUS} Item 3`);
 
-    // Press down to wrap to the first item
-    await user.does(user.press("down")).sees("Item 3 no longer focused", () => {
-      ui.contains(`${FOCUS} Item 1`); // Wrapped to first item
-      ui.doesNotContain(`${FOCUS} Item 3`); // Last item no longer focused
-    });
+    // Press down - focus should stay on the last item (edge boundary)
+    await user
+      .does(user.press("down"))
+      .sees("Focus remains on last item", () => {
+        ui.contains(`${FOCUS} Item 3`); // Still focused on last item
+      });
 
-    // Press up to wrap to the last item
-    await user.does(user.press("up")).sees("Item 1 no longer focused", () => {
-      ui.contains(`${FOCUS} Item 3`); // Wrapped to last item
-      ui.doesNotContain(`${FOCUS} Item 1`); // First item no longer focused
-    });
+    // Navigate to first item
+    await user.press("up");
+    await user.press("up");
+
+    // Verify we're now on the first item
+    ui.contains(`${FOCUS} Item 1`);
+
+    // Press up - focus should stay on the first item (edge boundary)
+    await user
+      .does(user.press("up"))
+      .sees("Focus remains on first item", () => {
+        ui.contains(`${FOCUS} Item 1`); // Still focused on first item
+      });
   });
 
   test("maintains focus in bounds when items change", async () => {
@@ -453,5 +462,114 @@ describe("Event/Callback", () => {
 
     expect(onFocusChange).toHaveBeenCalled();
     expect(onFocusChange.mock.calls).toContainEqual([1]); // Called with second index
+  });
+});
+
+describe("Scrollability", () => {
+  // Create a larger list of items for scrolling tests
+  const largeListItems = createTestItems(10);
+
+  test("renders only the maxVisibleItems number of items", async () => {
+    const renderItem = createItemRenderer<TestItem>();
+
+    const { ui } = createTestHelper(
+      <FocusList
+        items={largeListItems}
+        renderItem={renderItem}
+        maxVisibleItems={3} // Only show 3 items at a time
+      />
+    );
+
+    await ui.viewRendered("FocusList");
+
+    // Should contain only the first 3 items
+    ui.contains("Item 1");
+    ui.contains("Item 2");
+    ui.contains("Item 3");
+
+    // Should not show items beyond maxVisibleItems
+    ui.doesNotContain("Item 4");
+    ui.doesNotContain("Item 5");
+  });
+
+  test("scrolls the window when navigating beyond visible items", async () => {
+    const renderItem = createItemRenderer<TestItem>();
+
+    const { ui, user } = createTestHelper(
+      <FocusList
+        items={largeListItems}
+        renderItem={renderItem}
+        maxVisibleItems={3} // Only show 3 items at a time
+      />
+    );
+
+    await ui.viewRendered("FocusList");
+
+    // Initially, first 3 items are visible with first one focused
+    ui.contains(`${FOCUS} Item 1`);
+    ui.contains("Item 2");
+    ui.contains("Item 3");
+    ui.doesNotContain("Item 4");
+
+    // Move focus down multiple times to trigger scrolling
+    await user.press("down");
+    await user.press("down");
+
+    // Now focus should be on item 3
+    ui.contains(`${FOCUS} Item 3`);
+
+    // Press down one more time - should scroll window
+    await user.press("down");
+
+    // Now should show items 2-4 with item 4 focused
+    ui.doesNotContain("Item 1"); // No longer visible
+    ui.contains("Item 2");
+    ui.contains("Item 3");
+    ui.contains(`${FOCUS} Item 4`); // Now visible and focused
+  });
+
+  test("renders scrollbar when content overflows", async () => {
+    const renderItem = createItemRenderer<TestItem>();
+
+    const { ui, rawFrame } = createTestHelper(
+      <FocusList
+        items={largeListItems}
+        renderItem={renderItem}
+        maxVisibleItems={3} // Only show 3 items at a time
+        scrollTrackChar="│"
+        scrollThumbChar="█"
+      />
+    );
+
+    await ui.viewRendered("FocusList");
+
+    // Should render scrollbar with the specified characters
+    const frame = rawFrame();
+    expect(frame).toContain("█"); // Thumb character
+    expect(frame).toContain("│"); // Track character
+  });
+
+  test("auto-adjusts window to show selected item", async () => {
+    const renderItem = createItemRenderer<TestItem>();
+
+    // Start with selectedId that's outside the initial visible window
+    const { ui } = createTestHelper(
+      <FocusList
+        items={largeListItems}
+        renderItem={renderItem}
+        maxVisibleItems={3}
+        selectedId="item-8" // Select an item outside initial view
+      />
+    );
+
+    await ui.viewRendered("FocusList");
+
+    // Should automatically scroll to make the selected item visible
+    ui.contains("Item 8");
+    ui.contains(`${FOCUS} Item 8`);
+
+    // First items should not be visible as we've scrolled down
+    ui.doesNotContain("Item 1");
+    ui.doesNotContain("Item 2");
   });
 });
