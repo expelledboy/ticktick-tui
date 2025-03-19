@@ -25,6 +25,10 @@ export const ProjectList = () => {
   const { data: projects, isLoading, error } = useProjects();
   const selectedProjectId = useAppStore((s) => s.selectedProjectId);
   const inFocus = useAppStore((s) => s.activeView === "projects");
+  const availableHeight = useAppStore((s) => s.availableListHeight.projects);
+
+  // Calculate max visible items by subtracting header height from available height
+  const maxVisibleItems = Math.max(1, availableHeight - 2); // -2 for the "Projects" title and spacing
 
   useDebugLogs("ProjectList");
 
@@ -114,6 +118,12 @@ export const ProjectList = () => {
       renderEmpty={renderEmpty}
       getItemId={(project) => project.id}
       renderItem={renderProjectItem}
+      maxVisibleItems={maxVisibleItems}
+      showScrollbar={true}
+      scrollTrackChar="│"
+      scrollThumbChar="│"
+      scrollTrackColor="gray"
+      scrollThumbColor="green"
     />
   );
 };

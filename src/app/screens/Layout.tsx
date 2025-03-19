@@ -1,7 +1,7 @@
 import React, { memo, useEffect } from "react";
 import { Box } from "ink";
 import { useTerminalDimensions } from "../../hooks/useTerminalDimensions";
-import { useAppStore } from "../../store";
+import { useAppStore, STORE_WRITE } from "../../store";
 import { SHOW_NUM_LOGS } from "../../constants";
 
 /**
@@ -58,6 +58,31 @@ export const Layout: React.FC<{
   // Height proportions for vertical layout
   const projectPanelHeightRatio = 0.65; // Project panel takes 65% of height in vertical layout
   const taskPanelHeightRatio = 0.35; // Task panel takes 35% of height in vertical layout
+
+  // Calculate available list heights (accounting ONLY for borders, not headers)
+  const borderHeight = 1;
+  const projectsListHeight = Math.max(5, mainContentHeight - borderHeight);
+  const projectListHeight = isWideTerminal
+    ? Math.max(5, mainContentHeight - borderHeight)
+    : Math.max(
+        5,
+        Math.floor(mainContentHeight * projectPanelHeightRatio) - borderHeight
+      );
+  const taskListHeight = isWideTerminal
+    ? Math.max(5, mainContentHeight - borderHeight)
+    : Math.max(
+        5,
+        Math.floor(mainContentHeight * taskPanelHeightRatio) - borderHeight
+      );
+
+  // Update store with available list heights
+  useEffect(() => {
+    STORE_WRITE.setAvailableListHeight({
+      projects: projectsListHeight,
+      project: projectListHeight,
+      task: taskListHeight,
+    });
+  }, [projectsListHeight, projectListHeight, taskListHeight]);
 
   return (
     <Box flexDirection="column" width={width} height={height}>

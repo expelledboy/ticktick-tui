@@ -471,9 +471,11 @@ function FocusList<T>({
     );
 
     // Create the scrollbar characters array
-    const scrollbarChars = Array(effectiveMaxVisibleItems).fill(
-      scrollTrackChar
-    );
+    const scrollbarChars = Array(effectiveMaxVisibleItems).fill({
+      char: scrollTrackChar,
+      color: scrollTrackColor,
+      type: "track",
+    });
 
     // Place the thumb
     for (
@@ -481,19 +483,18 @@ function FocusList<T>({
       i < thumbSize && thumbPosition + i < scrollbarChars.length;
       i++
     ) {
-      scrollbarChars[thumbPosition + i] = scrollThumbChar;
+      scrollbarChars[thumbPosition + i] = {
+        char: scrollThumbChar,
+        color: scrollThumbColor,
+        type: "thumb",
+      };
     }
 
     return (
       <Box flexDirection="column" marginRight={1}>
         {scrollbarChars.map((char, i) => (
-          <Text
-            key={i}
-            color={
-              char === scrollThumbChar ? scrollThumbColor : scrollTrackColor
-            }
-          >
-            {char}
+          <Text key={i} color={char.color}>
+            {char.char}
           </Text>
         ))}
       </Box>

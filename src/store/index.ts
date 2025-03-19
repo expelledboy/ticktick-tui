@@ -36,4 +36,5 @@ export const STORE_WRITE = {
   setActiveView: defaultState.setActiveView,
   setFocusedId: defaultState.setFocusedId,
   setError: defaultState.setError,
+  setAvailableListHeight: defaultState.setAvailableListHeight,
 };

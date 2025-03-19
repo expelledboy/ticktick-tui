@@ -18,6 +18,10 @@ export default function Project() {
   const inFocus = useAppStore((s) => s.activeView === "project");
   const selectedProjectId = useAppStore((s) => s.selectedProjectId);
   const selectedTaskId = useAppStore((s) => s.selectedTaskId);
+  const availableHeight = useAppStore((s) => s.availableListHeight.project);
+
+  // Calculate max visible items by subtracting header height from available height
+  const maxVisibleItems = Math.max(1, availableHeight - 1); // for project name, task count, and sort order
 
   useDebugLogs("Project");
 
@@ -87,6 +91,7 @@ export default function Project() {
         <Text
           color={isSelected ? "green" : undefined}
           bold={isFocused && inFocus}
+          wrap="truncate"
         >
           {isFocused ? "› " : "  "}
           {status}
@@ -170,6 +175,12 @@ export default function Project() {
       getItemId={(task) => task.id}
       renderEmpty={renderEmpty}
       renderItem={renderTaskItem}
+      maxVisibleItems={maxVisibleItems}
+      showScrollbar={true}
+      scrollTrackChar="│"
+      scrollThumbChar="│"
+      scrollTrackColor="gray"
+      scrollThumbColor="green"
     />
   );
 }

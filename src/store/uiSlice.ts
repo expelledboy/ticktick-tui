@@ -17,6 +17,12 @@ type UIState = {
   // Selected
   selectedProjectId: string | null;
   selectedTaskId: string | null;
+  // UI Layout
+  availableListHeight: {
+    projects: number;
+    project: number;
+    task: number;
+  };
 };
 
 type UIActions = {
@@ -34,6 +40,10 @@ type UIActions = {
   // Selected
   setSelectedProjectId: (id: string | null) => void;
   setSelectedTaskId: (id: string | null) => void;
+  // UI Layout
+  setAvailableListHeight: (
+    heights: Partial<UIState["availableListHeight"]>
+  ) => void;
 };
 
 type UISlice = UIState & UIActions;
@@ -67,4 +77,14 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   selectedTaskId: null,
   setSelectedProjectId: (id: string | null) => set(() => ({ selectedProjectId: id })),
   setSelectedTaskId: (id: string | null) => set(() => ({ selectedTaskId: id })),
+  
+  // UI Layout
+  availableListHeight: {
+    projects: 20, // Default fallback values
+    project: 20,
+    task: 10,
+  },
+  setAvailableListHeight: (heights) => set((s) => ({
+    availableListHeight: { ...s.availableListHeight, ...heights }
+  })),
 });
